@@ -382,7 +382,10 @@
   // mp: 対戦で使うときの設定 { deadline, now, onSubmit, onBack, title }
   const E = { odai: null, picks: [null, null, null], active: 0, offers: [[], [], []], mp: null, submitted: false };
   let easyTimer = null;
-  const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // 札バトルでは、全員に同じ札を配るため、決まった種から乱数を出す
+  let rnd = Math.random;
+  const seeded = (seed) => { let t = seed >>> 0; return () => { t = (t + 0x6d2b79f5) >>> 0; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; };
+  const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const take = (arr, n, not) => shuffle(arr.filter((x) => !not || !not.some((y) => y.w === x.w))).slice(0, n);
   const todaySeason = () => (window.Fuzei ? window.Fuzei.today.season : "春");
   function easySeason() {
@@ -408,6 +411,7 @@
     if (mp) E.odai = mp.odai;
     else if (!keepOdai || !E.odai) E.odai = pickOdai("", E.odai && E.odai.id);
     E.picks = [null, null, null]; E.active = 0; E.offers = [[], [], []]; E.submitted = false;
+    rnd = mp && mp.seed != null ? seeded(mp.seed) : Math.random;
     [0, 1, 2].forEach(makeOffer);
     // 対戦のときは、お題の変更と「自分で直す」はなし。タイマーと進み具合を出す
     $("easyOdaiNext").classList.toggle("hidden", !!mp);

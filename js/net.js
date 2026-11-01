@@ -100,7 +100,8 @@
   const seenEv = new Set();
   let openedWrite = -1, builtVote = -1, builtReveal = -1, savedKucho = -1;
   const ph = () => (R && R.ph) || { s: "lobby", r: 0 };
-  const cfg = () => (R && R.cfg) || { rounds: 3, time: 180, vote: 1, season: "" };
+  const cfg = () => (R && R.cfg) || { rounds: 3, time: 180, vote: 1, season: "", kind: "free" };
+  const isFuda = () => cfg().kind === "fuda"; // 言葉の札バトル（全員が同じ札で）
   const isHost = () => !!R && R.host === PID;
   const players = () => (R && R.players) || {};
   // スマホが眠って通信だけ残っている人は、45秒だまっていたら「いない」あつかい
@@ -119,17 +120,25 @@
   const inviteUrl = () => `${location.origin}${location.pathname}?room=${code}`;
 
   // ---------- 作る・参加 ----------
-  const pick = { rounds: 3, time: 180, vote: 1, season: "" };
-  const segs = { segRounds: "rounds", segTime: "time", segVote: "vote", segSeason: "season" };
+  const pick = { rounds: 3, time: 180, vote: 1, season: "", kind: "free" };
+  const segs = { segRounds: "rounds", segTime: "time", segVote: "vote", segSeason: "season", segKind: "kind" };
   Object.entries(segs).forEach(([id, key]) => {
     $(id).addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
-      pick[key] = key === "season" ? b.dataset.v : Number(b.dataset.v);
+      pick[key] = key === "season" || key === "kind" ? b.dataset.v : Number(b.dataset.v);
+      if (key === "kind") $("kindNote").textContent = pick.kind === "fuda" ? "全員に同じ言葉の札が配られます。どの札を選ぶかで勝負！ 初めての人どうしでも遊べます" : "全員が自由に書いて競います（🔰 の人だけ札で参加もできます）";
       $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
     });
   });
   $("mpCreateBtn").addEventListener("click", () => { $("mpNameC").value = myName(); $("mpCreateMsg").textContent = ""; A.show("mpCreate"); ensureNet(); });
   $("mpJoinBtn").addEventListener("click", () => openJoin(""));
+  function setKind(k) {
+    pick.kind = k;
+    $("segKind").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.v === k));
+    $("kindNote").textContent = k === "fuda" ? "全員に同じ言葉の札が配られます。どの札を選ぶかで勝負！ 初めての人どうしでも遊べます" : "全員が自由に書いて競います（🔰 の人だけ札で参加もできます）";
+  }
+  $("mpCreateBtn").addEventListener("click", () => setKind("free"));
+  $("mpFudaBtn").addEventListener("click", () => { setKind("fuda"); $("mpNameC").value = myName(); $("mpCreateMsg").textContent = ""; A.show("mpCreate"); ensureNet(); });
   function openJoin(c) { $("mpCode").value = c || ""; $("mpNameJ").value = myName(); $("mpJoinMsg").textContent = ""; A.show("mpJoin"); ensureNet(); }
   $("mpCode").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
 
@@ -152,7 +161,7 @@
       const now = NET.now();
       await NET.update(KEY(c), {
         game: "haiku", host: PID,
-        cfg: { rounds: pick.rounds, time: pick.time, vote: pick.vote, season: pick.season },
+        cfg: { rounds: pick.rounds, time: pick.time, vote: pick.vote, season: pick.season, kind: pick.kind },
         ph: { s: "lobby", r: 0, dl: 0 },
         players: { [PID]: { name, joined: now, online: true } },
       });
@@ -256,22 +265,25 @@
       chip("time", `1句 ${Math.round(c.time / 60)}分`),
       chip("vote", c.vote ? "先生＋みんなで査定" : "先生だけで査定"),
       chip("season", c.season ? `お題：${c.season}` : "お題：ぜんぶの季節"),
+      chip("kind", c.kind === "fuda" ? "🎴 言葉の札バトル" : "✍️ 自分で書く"),
     ].join("") + (host ? `<span class="note" style="background:none">タップで変更</span>` : "");
     const list = Object.entries(players()).sort((a, b) => (a[1].joined || 0) - (b[1].joined || 0));
     $("lobbyPlayers").innerHTML = list.map(([id, p]) => `<li class="${p.online === false ? "off" : ""}">${p.easy ? "🔰" : ""}${esc(p.name)}${id === R.host ? '<span class="tag">ホスト</span>' : ""}${id === PID ? '<span class="tag me">あなた</span>' : ""}<span class="st">${p.online === false ? "通信待ち" : R.entrants && R.entrants[id] && ph().s !== "lobby" ? "対戦中" : ""}</span></li>`).join("");
     const meEasy = !!(players()[PID] && players()[PID].easy);
     $("mpEasyToggle").innerHTML = meEasy ? "🔰 言葉の札で参加：<b>オン</b>（タップでオフ）" : "🔰 言葉の札で参加：<b>オフ</b>（はじめての人はタップ）";
     $("mpEasyToggle").classList.toggle("on", meEasy);
+    $("mpEasyToggle").classList.toggle("hidden", isFuda());
     const n = list.filter(([, p]) => p.online !== false).length;
     $("mpStart").classList.toggle("hidden", !host);
     $("mpStart").textContent = n < 2 ? `スタート（ひとりでもOK）` : `スタート（${n}人）`;
     $("lobbyMsg").textContent = ph().s !== "lobby" ? "いま対戦中です。つぎの対戦から参加できます" : host ? "みんながそろったらスタート" : "ホストのスタートを待っています…";
   }
-  const CYCLE = { rounds: [1, 3, 5], time: [120, 180, 300], vote: [1, 0], season: ["", "春", "夏", "秋", "冬"] };
+  const CYCLE = { rounds: [1, 3, 5], time: [120, 180, 300], vote: [1, 0], season: ["", "春", "夏", "秋", "冬"], kind: ["free", "fuda"] };
   $("lobbyRule").addEventListener("click", (e) => {
     const b = e.target.closest("button.ch"); if (!b || !isHost()) return;
     const k = b.dataset.k, arr = CYCLE[k];
-    const next = arr[(arr.indexOf(cfg()[k]) + 1) % arr.length];
+    const cur = cfg()[k] == null ? arr[0] : cfg()[k];
+    const next = arr[(arr.indexOf(cur) + 1) % arr.length];
     NET.set(`${KEY(code)}/cfg/${k}`, next).catch((er) => A.toast(netError(er)));
   });
   $("mpEasyToggle").addEventListener("click", () => {
@@ -303,7 +315,7 @@
   function renderWrite() {
     const p = ph();
     const mine = subs(p.r)[PID];
-    const easy = !!(players()[PID] && players()[PID].easy);
+    const easy = isFuda() || !!(players()[PID] && players()[PID].easy);
     if (openedWrite !== p.r) {
       openedWrite = p.r;
       const odai = A.odaiById(R.odai[p.r]);
@@ -313,6 +325,8 @@
         onSubmit: (res, lines, yomi, auto) => submitHaiku(p.r, res, lines, auto, easy),
         onBack: () => { if (confirm("部屋を出ますか？")) leave(); },
       };
+      // 札バトルは、部屋番号とラウンドから決まる同じ札の配り方（全員そろう）
+      if (isFuda()) opts.seed = hash(`${code}:${p.r}:${R.odai[p.r]}`);
       if (easy) A.openEasyMp(opts); else A.openWrite(opts);
       A.toast(`第${p.r + 1}句　お題「${esc(odai.title)}」`);
     }
@@ -324,7 +338,7 @@
       }
     }
     const ent = entrants().filter((id) => online(id) || subs(p.r)[id]);
-    const chips = ent.map((id) => `<span class="${subs(p.r)[id] ? "done" : ""}">${subs(p.r)[id] ? "✓ " : "✍️ "}${players()[id] && players()[id].easy ? "🔰" : ""}${esc(nameOf(id))}</span>`).join("");
+    const chips = ent.map((id) => `<span class="${subs(p.r)[id] ? "done" : ""}">${subs(p.r)[id] ? "✓ " : "✍️ "}${!isFuda() && players()[id] && players()[id].easy ? "🔰" : ""}${esc(nameOf(id))}</span>`).join("");
     $("mpProgress").innerHTML = chips;
     $("easyProgress").innerHTML = chips;
     $("writeClose").classList.toggle("hidden", !isHost());
@@ -512,7 +526,7 @@
     const vc = A.vClass(x.verdict);
     const s = x.sub;
     return `<div class="rcard ${vc === "ari" ? "ari" : ""} ${x.rank === 1 ? "first" : ""}">
-      <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${s && s.easy ? "🔰" : ""}${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
+      <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${s && s.easy && !isFuda() ? "🔰" : ""}${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
       <div class="rbreak">先生 ${x.teacher}点${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>

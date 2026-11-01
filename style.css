@@ -822,3 +822,7 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .easy-toggle.on { border: 1.5px solid #7b4a2a; background: #fbf1e6; }
 .easy-toggle.on b { color: #7b4a2a; }
 #easy .bar .timer { margin-left: auto; }
+
+.fuda-battle { margin-top: 10px; background: linear-gradient(90deg, rgba(0,0,0,.05), transparent 10%, transparent 90%, rgba(0,0,0,.06)), repeating-linear-gradient(178deg, #f1e3c6 0 4px, #ecdcbc 4px 7px); border-color: #8a6238; box-shadow: 0 3px 0 #8a6238; }
+.fuda-battle small { color: var(--ink2); }
+.kind-note { margin: -4px 0 8px; text-align: right; }

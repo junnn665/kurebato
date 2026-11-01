@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 <div id="app">
@@ -48,8 +48,9 @@
         <div class="menu-title">みんなで句合（くあわせ）</div>
         <div class="row2">
           <button class="btn big vs" id="mpCreateBtn"><span class="ico">⚔️</span>部屋を作る<small>番号・QRで仲間を呼ぶ</small></button>
-          <button class="btn big vs" id="mpJoinBtn"><span class="ico">🎴</span>番号で参加<small>四ケタの部屋番号で</small></button>
+          <button class="btn big vs" id="mpJoinBtn"><span class="ico">🔢</span>番号で参加<small>四ケタの部屋番号で</small></button>
         </div>
+        <button class="btn fuda-battle" id="mpFudaBtn">🎴 言葉の札バトルの部屋を作る<small>全員に同じ札。選び方で勝負（初心者どうしでも）</small></button>
       </div>
       <div class="fuda-row">
         <button class="fuda" id="banzukeBtn"><span>番付</span></button>
@@ -271,6 +272,8 @@
     <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>部屋を作る</h2></header>
     <div class="paper form">
       <label>なまえ<input id="mpNameC" maxlength="10" autocomplete="nickname" placeholder="なまえ"></label>
+      <div class="field"><span>詠み方</span><div class="seg" id="segKind"><button data-v="free" class="on">自分で書く</button><button data-v="fuda">🎴 言葉の札バトル</button></div></div>
+      <p class="note kind-note" id="kindNote">全員が自由に書いて競います（🔰 の人だけ札で参加もできます）</p>
       <div class="field"><span>ラウンド数</span><div class="seg" id="segRounds"><button data-v="1">1</button><button data-v="3" class="on">3</button><button data-v="5">5</button></div></div>
       <div class="field"><span>制限時間</span><div class="seg" id="segTime"><button data-v="120">2分</button><button data-v="180" class="on">3分</button><button data-v="300">5分</button></div></div>
       <div class="field"><span>査定</span><div class="seg" id="segVote"><button data-v="1" class="on">先生＋みんな</button><button data-v="0">先生だけ</button></div></div>
@@ -341,19 +344,19 @@
   <div id="toasts" class="toasts"></div>
 </div>
 
-<script src="lib/qrcode.min.js?v=6"></script>
-<script src="js/fuzei.js?v=6"></script>
-<script src="js/kigo-alias.js?v=6"></script>
-<script src="js/kigo.js?v=6"></script>
-<script src="js/kotoba.js?v=6"></script>
-<script src="js/odai.js?v=6"></script>
-<script src="js/judge.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
-<script src="js/zukan.js?v=6"></script>
-<script src="js/shikishi.js?v=6"></script>
-<script src="js/tensaku.js?v=6"></script>
-<script src="js/meiku.js?v=6"></script>
-<script src="js/net.js?v=6"></script>
-<script src="js/banzuke.js?v=6"></script>
+<script src="lib/qrcode.min.js?v=7"></script>
+<script src="js/fuzei.js?v=7"></script>
+<script src="js/kigo-alias.js?v=7"></script>
+<script src="js/kigo.js?v=7"></script>
+<script src="js/kotoba.js?v=7"></script>
+<script src="js/odai.js?v=7"></script>
+<script src="js/judge.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
+<script src="js/zukan.js?v=7"></script>
+<script src="js/shikishi.js?v=7"></script>
+<script src="js/tensaku.js?v=7"></script>
+<script src="js/meiku.js?v=7"></script>
+<script src="js/net.js?v=7"></script>
+<script src="js/banzuke.js?v=7"></script>
 </body>
 </html>
