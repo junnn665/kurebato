@@ -126,7 +126,6 @@
     $(id).addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
       pick[key] = key === "season" || key === "kind" ? b.dataset.v : Number(b.dataset.v);
-      if (key === "kind") $("kindNote").textContent = pick.kind === "fuda" ? "全員に同じ言葉の札が配られます。どの札を選ぶかで勝負！ 初めての人どうしでも遊べます" : "全員が自由に書いて競います（🔰 の人だけ札で参加もできます）";
       $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
     });
   });
@@ -135,10 +134,10 @@
   function setKind(k) {
     pick.kind = k;
     $("segKind").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.v === k));
-    $("kindNote").textContent = k === "fuda" ? "全員に同じ言葉の札が配られます。どの札を選ぶかで勝負！ 初めての人どうしでも遊べます" : "全員が自由に書いて競います（🔰 の人だけ札で参加もできます）";
+    $("kindNote").textContent = "";
   }
   $("mpCreateBtn").addEventListener("click", () => setKind("free"));
-  $("mpFudaBtn").addEventListener("click", () => { setKind("fuda"); $("mpNameC").value = myName(); $("mpCreateMsg").textContent = ""; A.show("mpCreate"); ensureNet(); });
+
   function openJoin(c) { $("mpCode").value = c || ""; $("mpNameJ").value = myName(); $("mpJoinMsg").textContent = ""; A.show("mpJoin"); ensureNet(); }
   $("mpCode").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); });
 

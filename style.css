@@ -826,3 +826,19 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .fuda-battle { margin-top: 10px; background: linear-gradient(90deg, rgba(0,0,0,.05), transparent 10%, transparent 90%, rgba(0,0,0,.06)), repeating-linear-gradient(178deg, #f1e3c6 0 4px, #ecdcbc 4px 7px); border-color: #8a6238; box-shadow: 0 3px 0 #8a6238; }
 .fuda-battle small { color: var(--ink2); }
 .kind-note { margin: -4px 0 8px; text-align: right; }
+
+/* 部屋を作る：対戦の種類 */
+.kind-title { font-weight: 700; font-size: 14px; margin: 4px 0 6px; }
+.kind-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.kind-pick button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; text-align: center;
+  border: 1.5px solid var(--line); border-radius: 4px; background: #fff; transition: transform .1s;
+}
+.kind-pick button:active { transform: translateY(1px); }
+.kind-pick .k-ico { font-size: 26px; line-height: 1.1; }
+.kind-pick b { font-family: var(--fude); font-weight: 400; font-size: 18px; }
+.kind-pick small { font-family: var(--mincho); font-size: 11px; color: var(--ink2); line-height: 1.5; }
+.kind-pick button.on { border: 2px solid var(--ai); background: #eef2f8; box-shadow: 0 0 0 3px rgba(31,58,99,.12); }
+.kind-pick button[data-v="fuda"].on { border-color: #8a6238; background: #fbf1e3; box-shadow: 0 0 0 3px rgba(138,98,56,.15); }
+.kind-pick button.on b { color: var(--ai); } .kind-pick button[data-v="fuda"].on b { color: #7b4a2a; }
+.kind-note:empty { display: none; }
