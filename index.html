@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>句レバト</title>
+  <meta name="description" content="お題を見て一句。先生の査定で才能アリ・凡人・才能ナシ。みんなで対戦もできる俳句ゲーム。">
+  <meta name="theme-color" content="#f3ecdc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="句レバト">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== ホーム ===== -->
+  <section id="home" class="screen">
+    <div class="home-hero">
+      <div class="logo">
+        <span class="logo-sub">才能アリか、才能ナシか。</span>
+        <h1 class="logo-main"><span>句</span><span>レ</span><span>バ</span><span>ト</span></h1>
+        <span class="logo-tag">俳句 査定バトル</span>
+      </div>
+      <div id="rankBadge" class="rank-badge"></div>
+    </div>
+
+    <div class="menu">
+      <button class="btn big primary" id="soloBtn"><span class="ico">🖌️</span>ひとりで査定<small>お題を見て一句。先生がすぐ査定</small></button>
+      <div class="menu-group">
+        <div class="menu-title">みんなで対戦</div>
+        <div class="row2">
+          <button class="btn big vs" id="mpCreateBtn"><span class="ico">⚔️</span>部屋を作る</button>
+          <button class="btn big vs" id="mpJoinBtn"><span class="ico">🔢</span>番号で参加</button>
+        </div>
+      </div>
+      <div class="row3">
+        <button class="btn" id="kuchoBtn">📒 句帳</button>
+        <button class="btn" id="dankiBtn">🏅 段位</button>
+        <button class="btn" id="howtoBtn">❓ あそびかた</button>
+      </div>
+    </div>
+    <footer class="copy">© 中濱Games</footer>
+  </section>
+
+  <!-- ===== あそびかた ===== -->
+  <section id="howto" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>あそびかた</h2></header>
+    <div class="paper prose">
+      <h3>ひとりで査定</h3>
+      <ol>
+        <li>お題の場面カードを見て、五・七・五で一句つくる</li>
+        <li>「査定してもらう」を押すと、先生が点数をつける</li>
+        <li><b class="v-ari">70点以上 才能アリ</b>／<b class="v-bon">50〜69点 凡人</b>／<b class="v-nashi">49点以下 才能ナシ</b></li>
+      </ol>
+      <h3>先生が見るところ</h3>
+      <ul>
+        <li><b>五七五</b>：中七が8音の「中八」はきびしめ。上五の字余りはゆるめ</li>
+        <li><b>季語</b>：一つが基本。ないと減点、二つ以上は「季重なり」</li>
+        <li><b>切れ</b>：「や」「かな」「けり」がうまく効くと加点</li>
+        <li><b>見せる・言わない</b>：「悲しい」「きれい」など気持ちを言うと減点。色・音・匂いなど五感の言葉は加点</li>
+        <li><b>お題との距離</b>：お題に写っているものを並べるだけだと「説明」と言われる</li>
+      </ul>
+      <p class="note">よみ（音数）は辞書で自動で出します。読みがちがうときは「よみを直す」で直せます。</p>
+      <h3>段位</h3>
+      <p>才能アリを3回とると<b>特待生5級</b>。そこからは毎回が<b>昇格試験</b>。合格ラインをこえると1つ昇格、45点未満だと1つ降格。特待生1級の上は<b>名人初段</b>、目指せ<b>永世名人</b>。</p>
+      <h3>みんなで対戦</h3>
+      <ol>
+        <li>ひとりが「部屋を作る」→ 4ケタの部屋番号・招待リンク・QRが出る</li>
+        <li>ほかの人は番号・リンク・QRで参加。ホストが「スタート」</li>
+        <li>全員同じお題で、制限時間内に一句。時間切れになると書きかけで自動提出</li>
+        <li><b>みんなで査定</b>：作者名をかくして、ほかの人の句に点をつける（自分の句には付けられない）</li>
+        <li>点数 ＝ 先生の査定 40％ ＋ みんなの平均 60％（「先生だけ」設定も可）</li>
+        <li>最下位から順に<b>結果発表</b>。ラウンドの合計点で優勝が決まる</li>
+      </ol>
+      <p>対戦中は 😀 ボタンからスタンプを送れます。</p>
+    </div>
+  </section>
+
+  <!-- ===== お題（ひとり） ===== -->
+  <section id="soloOdai" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>本日のお題</h2></header>
+    <div id="soloOdaiCard"></div>
+    <div class="seasons" id="seasonSeg">
+      <button data-season="" class="on">ぜんぶ</button><button data-season="春">春</button><button data-season="夏">夏</button><button data-season="秋">秋</button><button data-season="冬">冬</button><button data-season="四季">いつでも</button>
+    </div>
+    <div class="row2">
+      <button class="btn" id="odaiShuffle">🔄 お題をかえる</button>
+      <button class="btn primary" id="odaiGo">✍️ この お題で書く</button>
+    </div>
+  </section>
+
+  <!-- ===== 句を書く（ひとり・対戦 共通） ===== -->
+  <section id="write" class="screen hidden">
+    <header class="bar">
+      <button class="back" id="writeBack">‹ もどる</button>
+      <h2 id="writeTitle">一句どうぞ</h2>
+      <div id="writeTimer" class="timer hidden">3:00</div>
+    </header>
+    <div id="writeOdai"></div>
+    <div id="mpProgress" class="mp-progress hidden"></div>
+    <div class="paper write-box">
+      <label class="line"><span class="ln">上五</span><input id="l0" autocomplete="off" enterkeyhint="next" maxlength="20" placeholder="ふるいけや"><span class="mora" id="m0">0</span></label>
+      <div class="yomi" id="y0"></div>
+      <label class="line"><span class="ln">中七</span><input id="l1" autocomplete="off" enterkeyhint="next" maxlength="24" placeholder="かわずとびこむ"><span class="mora" id="m1">0</span></label>
+      <div class="yomi" id="y1"></div>
+      <label class="line"><span class="ln">下五</span><input id="l2" autocomplete="off" enterkeyhint="done" maxlength="20" placeholder="みずのおと"><span class="mora" id="m2">0</span></label>
+      <div class="yomi" id="y2"></div>
+      <div class="write-tools">
+        <span id="dictState" class="dict"></span>
+        <button class="link" id="yomiToggle">よみを直す</button>
+      </div>
+      <div id="yomiEdit" class="yomi-edit hidden">
+        <p class="note">音数がちがうときは、ひらがなで よみ を入れてね（空欄は自動）</p>
+        <input id="ye0" placeholder="上五のよみ" autocomplete="off">
+        <input id="ye1" placeholder="中七のよみ" autocomplete="off">
+        <input id="ye2" placeholder="下五のよみ" autocomplete="off">
+      </div>
+      <div id="kigoHint" class="kigo-hint"></div>
+    </div>
+    <button class="btn big primary" id="submitBtn">🖌️ 査定してもらう</button>
+    <p id="writeMsg" class="msg"></p>
+  </section>
+
+  <!-- ===== 査定中 ===== -->
+  <section id="judging" class="screen hidden">
+    <div class="judging">
+      <div class="drum">🥁</div>
+      <p class="judging-text">査定中<span class="dots"><i>.</i><i>.</i><i>.</i></span></p>
+    </div>
+  </section>
+
+  <!-- ===== 査定結果（ひとり） ===== -->
+  <section id="soloResult" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ ホーム</button><h2>査定結果</h2></header>
+    <div id="soloResultBody"></div>
+    <div id="rankChange"></div>
+    <div class="row2">
+      <button class="btn" id="shareBtn">📤 シェア</button>
+      <button class="btn primary" id="againBtn">🖌️ もう一句</button>
+    </div>
+  </section>
+
+  <!-- ===== 句帳 ===== -->
+  <section id="kucho" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>句帳</h2></header>
+    <div class="kucho-stats" id="kuchoStats"></div>
+    <div id="kuchoList" class="kucho-list"></div>
+  </section>
+
+  <!-- ===== 段位 ===== -->
+  <section id="danki" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>段位</h2></header>
+    <div id="dankiBody"></div>
+  </section>
+
+  <!-- ===== 対戦：部屋を作る ===== -->
+  <section id="mpCreate" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>部屋を作る</h2></header>
+    <div class="paper form">
+      <label>なまえ<input id="mpNameC" maxlength="10" autocomplete="nickname" placeholder="なまえ"></label>
+      <div class="field"><span>ラウンド数</span><div class="seg" id="segRounds"><button data-v="1">1</button><button data-v="3" class="on">3</button><button data-v="5">5</button></div></div>
+      <div class="field"><span>制限時間</span><div class="seg" id="segTime"><button data-v="120">2分</button><button data-v="180" class="on">3分</button><button data-v="300">5分</button></div></div>
+      <div class="field"><span>査定</span><div class="seg" id="segVote"><button data-v="1" class="on">先生＋みんな</button><button data-v="0">先生だけ</button></div></div>
+      <div class="field"><span>お題の季節</span><div class="seg" id="segSeason"><button data-v="" class="on">ぜんぶ</button><button data-v="春">春</button><button data-v="夏">夏</button><button data-v="秋">秋</button><button data-v="冬">冬</button></div></div>
+    </div>
+    <button class="btn big primary" id="mpCreateGo">部屋を作る</button>
+    <p class="msg" id="mpCreateMsg"></p>
+  </section>
+
+  <!-- ===== 対戦：番号で参加 ===== -->
+  <section id="mpJoin" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>番号で参加</h2></header>
+    <div class="paper form">
+      <label>部屋番号<input id="mpCode" inputmode="numeric" maxlength="4" placeholder="1234" class="code-input"></label>
+      <label>なまえ<input id="mpNameJ" maxlength="10" autocomplete="nickname" placeholder="なまえ"></label>
+    </div>
+    <button class="btn big primary" id="mpJoinGo">参加する</button>
+    <p class="msg" id="mpJoinMsg"></p>
+  </section>
+
+  <!-- ===== 対戦：待合室 ===== -->
+  <section id="mpLobby" class="screen hidden">
+    <header class="bar"><button class="back" id="mpLeave1">‹ 部屋を出る</button><h2>待合室</h2></header>
+    <div class="paper lobby-code">
+      <div class="code-label">部屋番号</div>
+      <div class="code" id="lobbyCode">----</div>
+      <div id="lobbyQr" class="qr"></div>
+      <button class="btn small" id="inviteBtn">🔗 招待リンクを送る</button>
+    </div>
+    <div class="paper">
+      <div class="lobby-rule" id="lobbyRule"></div>
+      <ul class="players" id="lobbyPlayers"></ul>
+    </div>
+    <button class="btn big primary hidden" id="mpStart">スタート</button>
+    <p class="msg info" id="lobbyMsg"></p>
+  </section>
+
+  <!-- ===== 対戦：投票（みんなで査定） ===== -->
+  <section id="mpVote" class="screen hidden">
+    <header class="bar"><h2>みんなで査定</h2><div id="voteTimer" class="timer">1:00</div></header>
+    <div id="voteOdai"></div>
+    <p class="note center">作者はひみつ。それぞれの句に点をつけよう</p>
+    <div id="voteList" class="vote-list"></div>
+    <button class="btn big primary" id="voteSubmit">査定を送る</button>
+    <p class="msg info" id="voteMsg"></p>
+  </section>
+
+  <!-- ===== 対戦：結果発表 ===== -->
+  <section id="mpReveal" class="screen hidden">
+    <header class="bar"><h2 id="revealTitle">結果発表</h2></header>
+    <div id="revealOdai"></div>
+    <div id="revealList" class="reveal-list"></div>
+    <div id="revealTotals"></div>
+    <button class="btn big primary hidden" id="mpNext">つぎのお題へ</button>
+    <p class="msg info" id="revealMsg"></p>
+    <div class="hidden" id="finalBtns">
+      <button class="btn" id="mpLeave2">部屋を出る</button>
+    </div>
+  </section>
+
+  <!-- スタンプ（対戦中） -->
+  <div id="stampWrap" class="stamp-wrap hidden">
+    <div id="stampBar" class="stamp-bar hidden"></div>
+    <button id="stampBtn" class="stamp-btn" aria-label="スタンプ">😀</button>
+  </div>
+  <div id="toasts" class="toasts"></div>
+</div>
+
+<script src="lib/qrcode.min.js?v=1"></script>
+<script src="js/kigo.js?v=1"></script>
+<script src="js/odai.js?v=1"></script>
+<script src="js/judge.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+<script src="js/net.js?v=1"></script>
+</body>
+</html>
