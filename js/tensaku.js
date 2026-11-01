@@ -92,14 +92,14 @@
       seen.add(key);
       const r = J.judge({ lines: c.lines, yomi: c.yomi.some(Boolean) ? c.yomi : null, odai });
       const delta = r.score - result.score;
-      // 点のゆらぎ（±3）ではなく、加点・減点の中身で本当によくなったものだけ
-      const real = sum(r.pts) - sum(result.pts);
-      if (delta <= 0 || real < 4) continue;
+      // 点のゆらぎはもうないので、3点以上上がったものだけ
+      const real = delta;
+      if (delta < 3) continue;
       c.real = real;
       const before = new Set(result.pts.map((p) => p.t));
       const after = new Set(r.pts.map((p) => p.t));
-      c.gone = result.pts.filter((p) => p.d < 0 && !after.has(p.t)).map((p) => p.t);
-      c.gain = r.pts.filter((p) => p.d > 0 && !before.has(p.t)).map((p) => p.t);
+      c.gone = result.pts.filter((p) => p.k === "bad" && !after.has(p.t)).map((p) => p.t);
+      c.gain = r.pts.filter((p) => p.k === "good" && !before.has(p.t)).map((p) => p.t);
       c.result = r; c.score = r.score; c.delta = delta;
       out.push(c);
     }
@@ -126,7 +126,7 @@
     const col = (lines, hi, cls) => `<div class="ts-tan ${cls}">${lines.map((l, i) => `<span class="${i === hi ? "hi" : ""}">${esc(l)}</span>`).join("")}</div>`;
     el.innerHTML = `
       <div class="ts-title">添削のビフォーアフター</div>
-      <p class="ts-lead">${NAMES[c.i]}の一か所で <b>${base.score}点 → ${c.score}点</b></p>
+      <p class="ts-lead">${NAMES[c.i]}の一か所で <b>${base.score}点 → ${c.score}点</b><br><small>型 ${base.kata}→${c.result.kata}　表現 ${base.hyogen}→${c.result.hyogen}</small></p>
       <div class="ts-pair">
         <div class="ts-side"><div class="ts-label">before</div>${col(base.lines, c.i, "before")}<div class="ts-score">${base.score}<small>点</small></div></div>
         <div class="ts-arrow"><span>添削</span>→</div>

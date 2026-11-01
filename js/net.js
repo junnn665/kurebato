@@ -346,7 +346,7 @@
   function submitHaiku(r, res, lines, auto, easy) {
     const data = {
       easy: !!easy,
-      lines, score: res.score, verdict: res.verdict, summary: res.summary,
+      lines, score: res.score, verdict: res.verdict, summary: res.summary, kata: res.kata, hyogen: res.hyogen,
       advice: res.advice, pts: res.pts.filter((p) => p.d !== 0).map((p) => [p.d, p.t]).slice(0, 8),
       moras: res.moras, empty: lines.every((l) => !l), t: NET.now(),
     };
@@ -527,7 +527,7 @@
     return `<div class="rcard ${vc === "ari" ? "ari" : ""} ${x.rank === 1 ? "first" : ""}">
       <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${s && s.easy && !isFuda() ? "🔰" : ""}${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
-      <div class="rbreak">先生 ${x.teacher}点${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
+      <div class="rbreak">先生 ${x.teacher}点${s.kata != null ? `（型${s.kata}・表現${s.hyogen}）` : ""}${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>
       <button class="link r-shikishi" data-id="${x.id}">🖼 色紙にする</button>
       <details><summary>先生の査定をくわしく</summary><ul class="pts">${(s.pts || []).map(([d, t]) => `<li class="${d > 0 ? "good" : "bad"}"><span class="d">${d > 0 ? "+" + d : d}</span><span>${esc(t)}</span></li>`).join("")}</ul>

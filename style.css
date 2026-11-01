@@ -842,3 +842,17 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .kind-pick button[data-v="fuda"].on { border-color: #8a6238; background: #fbf1e3; box-shadow: 0 0 0 3px rgba(138,98,56,.15); }
 .kind-pick button.on b { color: var(--ai); } .kind-pick button[data-v="fuda"].on b { color: #7b4a2a; }
 .kind-note:empty { display: none; }
+
+/* ---- 採点の内訳（型・表現） ---- */
+.breakdown { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.bd-row { display: grid; grid-template-columns: 42px 1fr 64px; align-items: center; gap: 8px; margin-top: 6px; }
+.bd-name { font-family: var(--fude); font-size: 18px; }
+.bd-bar { height: 10px; border-radius: 5px; background: #e6dac0; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.12); }
+.bd-bar i { display: block; height: 100%; border-radius: 5px; }
+.bd-bar.kata i { background: linear-gradient(90deg, #1f3a63, #3d5f92); }
+.bd-bar.hyo i { background: linear-gradient(90deg, #a92e22, #d34a3b); }
+.bd-num { text-align: right; font-family: var(--mincho); font-size: 13px; color: var(--ink2); }
+.bd-num b { font-size: 18px; color: var(--ink); }
+.bd-sub { font-size: 11px; color: var(--ink2); padding-left: 50px; margin-top: 2px; font-family: var(--mincho); }
+.pts-h { font-family: var(--fude); font-size: 15px; margin: 10px 0 0; color: var(--ink2); }
+.ts-lead small { font-size: 12px; color: var(--ink2); }

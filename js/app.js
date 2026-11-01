@@ -245,6 +245,17 @@
       if (window.Zukan) window.Zukan.collect(lines, result.score);
     }, 1700);
   }
+  // 「型 38/40・表現 41/60」の内訳
+  function breakdownHtml(r) {
+    if (r.kata == null) return "";
+    const bar = (got, max, cls) => `<span class="bd-bar ${cls}"><i style="width:${Math.round((got / max) * 100)}%"></i></span>`;
+    return `<div class="breakdown">
+      <div class="bd-row"><span class="bd-name">型</span>${bar(r.kata, 40, "kata")}<span class="bd-num"><b>${r.kata}</b>/40</span></div>
+      <div class="bd-sub">${(r.parts || []).map((p) => `${p.name} ${p.got}/${p.max}`).join("　・　")}</div>
+      <div class="bd-row"><span class="bd-name">表現</span>${bar(r.hyogen, 60, "hyo")}<span class="bd-num"><b>${r.hyogen}</b>/60</span></div>
+      <div class="bd-sub">言わずに見せる・五感・具体的なモノ・新鮮さ・お題との距離</div>
+    </div>`;
+  }
   const vClass = (v) => (v === "才能アリ" ? "ari" : v === "凡人" ? "bon" : v === "才能ナシ" ? "nashi" : "none");
   function renderResult(el, r, { name }) {
     const sign = (d) => (d > 0 ? `+${d}` : d < 0 ? `${d}` : "・");
@@ -258,7 +269,11 @@
         </div>
       </div>
       <div class="paper">
-        <ul class="pts">${r.pts.map((p) => `<li class="${p.k}"><span class="d">${sign(p.d)}</span><span>${esc(p.t)}</span></li>`).join("")}</ul>
+        ${breakdownHtml(r)}
+        <div class="pts-h">型の見どころ</div>
+        <ul class="pts">${r.pts.filter((p) => p.c === "型").map((p) => `<li class="${p.k}"><span class="d">${p.d === 0 && p.k === "good" ? "◎" : sign(p.d)}</span><span>${esc(p.t)}</span></li>`).join("")}</ul>
+        <div class="pts-h">表現の見どころ</div>
+        <ul class="pts">${r.pts.filter((p) => p.c !== "型").map((p) => `<li class="${p.k}"><span class="d">${sign(p.d)}</span><span>${esc(p.t)}</span></li>`).join("") || `<li class="info"><span class="d">・</span><span>とくに加点・減点はありません</span></li>`}</ul>
         <div class="advice"><b>添削ポイント</b><br>${r.advice.map(esc).join("<br>")}</div>
         <p class="note">音数：${r.moras.join("・")}（${r.reads.map((x) => esc(x.yomi.replace(/〇/g, "？"))).join(" / ")}）</p>
       </div>`;
@@ -422,6 +437,7 @@
     $("easyBack").textContent = mp ? "‹ 部屋を出る" : "‹ もどる";
     $("easySubmit").textContent = mp ? "📮 提出する" : "🖌️ 査定してもらう";
     $("easyMsg").textContent = "";
+    lockEasy(false); // 前のラウンドで提出したときのロックを外す
     clearInterval(easyTimer);
     if (mp) { easyTimer = setInterval(tickEasy, 250); tickEasy(); }
     show("easy");
@@ -493,7 +509,7 @@
   $("easySubmit").addEventListener("click", () => submitEasy(false));
 
   // 他のファイル（net.js）から使う
-  window.App = { get lastEntry() { return lastEntry; }, show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); clearInterval(easyTimer); },
+  window.App = { get lastEntry() { return lastEntry; }, breakdownHtml, show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); clearInterval(easyTimer); },
     openEasyMp(opts) { startEasy(false, opts); },
     get easy() { return E; },
     lockEasy(lines) { E.submitted = true; if (lines) E.picks = lines.map((w) => ({ w, y: "" })); renderEasy(); lockEasy(true); $("easyMsg").textContent = "📮 提出しました。みんなを待っています…"; },
