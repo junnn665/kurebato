@@ -69,7 +69,7 @@
       cleanOld(cutoff) {
         return db.ref("rooms").orderByChild("created").endAt(cutoff).limitToFirst(30).once("value").then((snap) => {
           const jobs = [];
-          snap.forEach((c) => { const v = c.val(); if (String(c.key).startsWith("haiku-") && v && v.created <= cutoff) jobs.push(c.ref.remove()); });
+          snap.forEach((c) => { const v = c.val(); if (String(c.key).startsWith("haiku-") && c.key !== "haiku-ranking" && v && v.created <= cutoff) jobs.push(c.ref.remove()); });
           return Promise.all(jobs);
         });
       },
@@ -554,6 +554,9 @@
       if (old.length) { const u = {}; old.forEach((id) => (u[id] = null)); NET.update(`${KEY(code)}/ev`, u).catch(() => {}); }
     }
   }
+
+  // 番付（banzuke.js）から使う
+  window.Net = { ensure: ensureNet, get db() { return NET; }, error: netError, pid: PID, myName, saveName };
 
   // ---------- 招待リンク・再読みこみ ----------
   const q = new URLSearchParams(location.search).get("room");

@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div id="app">
@@ -22,6 +22,7 @@
   <!-- ===== ホーム ===== -->
   <section id="home" class="screen">
     <div class="home-hero">
+      <div class="jikou" id="jikou"></div>
       <div class="kakejiku" aria-label="句レバト">
         <div class="kj-rod"></div>
         <div class="kj-cloth">
@@ -38,7 +39,10 @@
     </div>
 
     <div class="menu">
-      <button class="btn big primary" id="soloBtn"><span class="ico">🖌️</span>ひとりで査定<small>お題を見て一句。先生がすぐ査定</small></button>
+      <div class="noren-row">
+        <button class="noren ai" id="soloBtn"><span class="noren-rod"></span><span class="noren-cloth"><span class="mon">詠</span><span class="noren-label">一句詠む</span><small>自分で書いて査定</small></span></button>
+        <button class="noren cha" id="easyBtn"><span class="noren-rod"></span><span class="noren-cloth"><span class="mon">初</span><span class="noren-label">はじめての一句</span><small>言葉の札をえらぶだけ</small></span></button>
+      </div>
       <div class="menu-group">
         <div class="menu-title">みんなで句合（くあわせ）</div>
         <div class="row2">
@@ -46,10 +50,11 @@
           <button class="btn big vs" id="mpJoinBtn"><span class="ico">🎴</span>番号で参加<small>四ケタの部屋番号で</small></button>
         </div>
       </div>
-      <div class="row3">
-        <button class="btn" id="kuchoBtn">📒 句帳</button>
-        <button class="btn" id="dankiBtn">🏅 段位</button>
-        <button class="btn" id="howtoBtn">❓ あそびかた</button>
+      <div class="fuda-row">
+        <button class="fuda" id="banzukeBtn"><span>番付</span></button>
+        <button class="fuda" id="kuchoBtn"><span>句帳</span></button>
+        <button class="fuda" id="dankiBtn"><span>段位</span></button>
+        <button class="fuda" id="howtoBtn"><span>心得</span></button>
       </div>
     </div>
     <footer class="copy"><span class="rakkan">中濱</span>© 中濱Games</footer>
@@ -57,9 +62,17 @@
 
   <!-- ===== あそびかた ===== -->
   <section id="howto" class="screen hidden">
-    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>あそびかた</h2></header>
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>心得</h2></header>
     <div class="paper prose">
-      <h3>ひとりで査定</h3>
+      <h3>はじめての一句（初心者モード）</h3>
+      <ol>
+        <li>上五・中七・下五、それぞれ並んだ「言葉の札」から一枚ずつ選ぶだけ</li>
+        <li>札の右上の数字は音の数。<b class="v-ari">季</b>の印は季語の札</li>
+        <li>札には<b>罠</b>もまじっています（気持ちを言う言葉・ありがちな言い回し・季重なり・字余り）。先生にしかられて覚えよう</li>
+        <li>「自分で直す」で、選んだ句をもとに書きかえることもできます</li>
+        <li>初心者モードは段位には影響しません。番付は「初心者の部」に載ります</li>
+      </ol>
+      <h3>一句詠む（ひとりで査定）</h3>
       <ol>
         <li>お題の場面カードを見て、五・七・五で一句つくる</li>
         <li>「査定してもらう」を押すと、先生が点数をつける</li>
@@ -74,6 +87,8 @@
         <li><b>お題との距離</b>：お題に写っているものを並べるだけだと「説明」と言われる</li>
       </ul>
       <p class="note">よみ（音数）は辞書で自動で出します。読みがちがうときは「よみを直す」で直せます。</p>
+      <h3>番付</h3>
+      <p><b class="v-ari">才能アリ（70点以上）</b>をとったら、査定結果から番付に名を連ねられます。点の高い順に横綱・大関・関脇・小結・前頭…。「今場所（今月）」と「歴代」、「本場所」と「初心者の部」があります。</p>
       <h3>段位</h3>
       <p>才能アリを3回とると<b>特待生5級</b>。そこからは毎回が<b>昇格試験</b>。合格ラインをこえると1つ昇格、45点未満だと1つ降格。特待生1級の上は<b>名人初段</b>、目指せ<b>永世名人</b>。</p>
       <h3>みんなで対戦</h3>
@@ -134,6 +149,40 @@
     <p id="writeMsg" class="msg"></p>
   </section>
 
+  <!-- ===== はじめての一句（言葉の札） ===== -->
+  <section id="easy" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>はじめての一句</h2></header>
+    <div id="easyOdai"></div>
+    <div class="easy-board">
+      <div class="easy-slots" id="easySlots"></div>
+      <div class="easy-preview" id="easyPreview"></div>
+    </div>
+    <p class="easy-guide" id="easyGuide"></p>
+    <div class="chips" id="easyChips"></div>
+    <div class="row3 easy-tools">
+      <button class="btn" id="easyMore">🔄 ほかの札</button>
+      <button class="btn" id="easyOdaiNext">🖼 お題をかえる</button>
+      <button class="btn" id="easyEdit">✍️ 自分で直す</button>
+    </div>
+    <button class="btn big primary" id="easySubmit" disabled>🖌️ 査定してもらう</button>
+    <p class="note center">札には「罠」もまじっています。先生にしかられて覚えよう</p>
+  </section>
+
+  <!-- ===== 番付 ===== -->
+  <section id="banzuke" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>番付</h2></header>
+    <div class="bz-tabs">
+      <div class="seg" id="bzDiv"><button data-v="normal" class="on">本場所</button><button data-v="easy">初心者の部</button></div>
+      <div class="seg" id="bzTerm"><button data-v="month" class="on">今場所</button><button data-v="all">歴代</button></div>
+    </div>
+    <div class="bz-board">
+      <div class="bz-head"><span class="bz-basho" id="bzBasho"></span><span class="bz-title">句レバト番付</span><span class="bz-note">才能アリ以上</span></div>
+      <div class="bz-cols" id="bzCols"></div>
+    </div>
+    <p class="note center">← 左へすべらせると続きが見られます</p>
+    <p class="msg info" id="bzMsg"></p>
+  </section>
+
   <!-- ===== 査定中 ===== -->
   <section id="judging" class="screen hidden">
     <div class="judging">
@@ -147,6 +196,11 @@
     <header class="bar"><button class="back" data-go="home">‹ ホーム</button><h2>査定結果</h2></header>
     <div id="soloResultBody"></div>
     <div id="rankChange"></div>
+    <div id="bzEntry" class="paper bz-entry hidden">
+      <div class="bz-entry-title">才能アリ！ 番付に名を連ねますか？</div>
+      <div class="bz-entry-row"><input id="bzName" maxlength="10" placeholder="俳号（なまえ）" autocomplete="nickname"><button class="btn primary" id="bzSubmit">番付に載せる</button></div>
+      <p class="msg info" id="bzEntryMsg"></p>
+    </div>
     <div class="row2">
       <button class="btn" id="shareBtn">📤 シェア</button>
       <button class="btn primary" id="againBtn">🖌️ もう一句</button>
@@ -234,16 +288,19 @@
   <!-- スタンプ（対戦中） -->
   <div id="stampWrap" class="stamp-wrap hidden">
     <div id="stampBar" class="stamp-bar hidden"></div>
-    <button id="stampBtn" class="stamp-btn" aria-label="スタンプ">😀</button>
+    <button id="stampBtn" class="stamp-btn" aria-label="スタンプ">🎐</button>
   </div>
   <div id="toasts" class="toasts"></div>
 </div>
 
 <script src="lib/qrcode.min.js?v=1"></script>
-<script src="js/kigo.js?v=1"></script>
-<script src="js/odai.js?v=1"></script>
-<script src="js/judge.js?v=1"></script>
-<script src="js/app.js?v=1"></script>
-<script src="js/net.js?v=2"></script>
+<script src="js/fuzei.js?v=3"></script>
+<script src="js/kigo.js?v=3"></script>
+<script src="js/kotoba.js?v=3"></script>
+<script src="js/odai.js?v=3"></script>
+<script src="js/judge.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
+<script src="js/net.js?v=3"></script>
+<script src="js/banzuke.js?v=3"></script>
 </body>
 </html>

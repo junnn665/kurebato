@@ -78,7 +78,7 @@
         // 「月」1文字は、数字や「曜」がくっついているときは季語にしない（五月などは長い方で先に拾われる）
         if (k.w === "月") {
           const prev = t[i - 1] || "", next = t[i + 1] || "";
-          if (NUM_CHARS.includes(prev) || next === "曜" || next === "日") continue;
+          if ((prev && NUM_CHARS.includes(prev)) || next === "曜" || next === "日") continue;
         }
         for (let j = i; j < i + k.w.length; j++) used[j] = true;
         out.push({ w: k.w, season: k.season, at: i });

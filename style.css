@@ -500,3 +500,163 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .stamp-bar { border-radius: 4px; border-color: var(--ink); }
 .stamp-bar button { border-radius: 3px; font-family: var(--mincho); }
 .toast { border-radius: 2px; font-family: var(--mincho); background: var(--ink); border-left: 6px solid var(--shu); box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+
+/* =====================================================================
+   風情（季節のうつろい・暖簾・木札・番付・言葉の札）
+   ===================================================================== */
+#app { position: relative; z-index: 1; }
+.sansui { position: fixed; left: 0; right: 0; bottom: 0; height: 30vh; z-index: 0; pointer-events: none; }
+.sansui svg { width: 100%; height: 100%; display: block; }
+.sansui .tsuki { fill: #f6efdc; stroke: rgba(28,23,20,.12); }
+:root[data-season="夏"] .sansui .tsuki { fill: rgba(192,57,43,.18); stroke: none; }
+:root[data-season="春"] .sansui .tsuki { fill: rgba(246,193,204,.5); stroke: none; }
+.fuzei { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 4; pointer-events: none; }
+.screen { animation: sumi .45s ease both; }
+@keyframes sumi { from { opacity: 0; filter: blur(5px); transform: translateY(4px); } to { opacity: 1; filter: none; transform: none; } }
+.tcy { text-combine-upright: all; -webkit-text-combine: horizontal; }
+
+/* 季節ごとの差し色 */
+:root[data-season="春"] { --sashi: #d97a92; }
+:root[data-season="夏"] { --sashi: #2f7d6d; }
+:root[data-season="秋"] { --sashi: #b4501f; }
+:root[data-season="冬"] { --sashi: #5b7290; }
+
+/* ---- 時候（和風月名・節気） ---- */
+.home-hero { position: relative; }
+.jikou {
+  position: absolute; right: 2px; top: 10px; writing-mode: vertical-rl; display: flex; gap: 6px; align-items: flex-start;
+  font-family: var(--mincho); color: var(--ink2); font-size: 13px; letter-spacing: .2em;
+}
+.jikou .j-mon { font-family: var(--fude); font-size: 22px; color: var(--ink); letter-spacing: .05em; }
+.jikou .j-sek { padding-top: 6px; }
+.jikou .j-sea { padding-top: 6px; color: var(--sashi, var(--shu)); }
+.jikou .j-sea::before { content: "●"; font-size: 8px; display: block; margin-bottom: 4px; }
+
+/* ---- 暖簾のボタン ---- */
+.noren-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.noren { background: none; border: 0; padding: 0; display: flex; flex-direction: column; align-items: stretch; filter: drop-shadow(0 6px 6px rgba(40,25,10,.22)); transition: transform .15s; }
+.noren:active { transform: translateY(2px) rotate(-.4deg); }
+.noren-rod { height: 9px; margin: 0 -6px; border-radius: 5px; background: linear-gradient(#a37a49, #6b4a28 50%, #4b321a); position: relative; z-index: 1; }
+.noren-cloth {
+  position: relative; margin-top: -3px; padding: 14px 6px 34px; min-height: 156px; color: #fbf6ea;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 67.5% 100%, 67.5% 82%, 65.5% 82%, 65.5% 100%, 34.5% 100%, 34.5% 82%, 32.5% 82%, 32.5% 100%, 0 100%);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 4px);
+  animation: kaze 5s ease-in-out infinite; transform-origin: top center;
+}
+.noren.cha .noren-cloth { animation-delay: -2.2s; }
+@keyframes kaze { 0%, 100% { transform: skewX(0); } 50% { transform: skewX(-1.2deg); } }
+.noren.ai .noren-cloth { background-color: var(--ai); }
+.noren.cha .noren-cloth { background-color: #7b4a2a; }
+.mon {
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid #fbf6ea; font-family: var(--fude); font-size: 26px; line-height: 1; margin-bottom: 4px;
+  box-shadow: inset 0 0 0 3px transparent, inset 0 0 0 4px rgba(251,246,234,.6);
+}
+.noren-label { font-family: var(--fude); font-size: 19px; letter-spacing: .04em; white-space: nowrap; }
+.noren small { font-family: var(--mincho); font-size: 11px; opacity: .85; text-align: center; }
+.menu-group { margin-top: 20px; }
+
+/* ---- 木札のメニュー ---- */
+.fuda-row { display: flex; justify-content: center; gap: 14px; margin-top: 22px; padding-top: 14px; position: relative; }
+.fuda-row::before { content: ""; position: absolute; left: 6%; right: 6%; top: 2px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #4b321a, #8a6238, #4b321a); }
+.fuda {
+  position: relative; width: 58px; height: 112px; border: 0; padding: 0; border-radius: 4px 4px 3px 3px;
+  background: linear-gradient(90deg, rgba(0,0,0,.08), transparent 18%, transparent 82%, rgba(0,0,0,.1)),
+    repeating-linear-gradient(176deg, #d9b98a 0 3px, #cfab78 3px 5px, #dcc093 5px 9px);
+  box-shadow: 0 4px 0 #8a6238, 0 7px 10px rgba(40,25,10,.25), inset 0 0 0 1px rgba(0,0,0,.15);
+  transform-origin: 50% -14px; transition: transform .2s;
+}
+.fuda::before { content: ""; position: absolute; left: 50%; top: -14px; width: 1.5px; height: 18px; background: #6b4a28; }
+.fuda::after { content: ""; position: absolute; left: 50%; top: 8px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: #5a3a22; box-shadow: inset 0 1px 1px rgba(0,0,0,.5); }
+.fuda span { display: block; writing-mode: vertical-rl; margin: 22px auto 0; font-family: var(--fude); font-size: 23px; letter-spacing: .15em; color: #2a1910; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.fuda:nth-child(odd) { transform: rotate(-1.5deg); } .fuda:nth-child(even) { transform: rotate(1.2deg); }
+.fuda:active { transform: rotate(4deg); }
+.copy { margin-top: 30px; }
+
+/* ---- 言葉の札（はじめての一句） ---- */
+.easy-board { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.easy-slots { display: grid; gap: 6px; }
+.slot {
+  display: flex; align-items: center; gap: 10px; text-align: left; padding: 9px 12px; border-radius: 4px;
+  border: 1.5px dashed var(--line); background: rgba(250,245,233,.75); font-family: var(--mincho);
+}
+.slot.filled { border-style: solid; background: var(--paper2); }
+.slot.on { border: 2px solid var(--shu); box-shadow: 0 0 0 3px rgba(192,57,43,.12); }
+.slot-name { font-family: var(--fude); color: var(--shu); font-size: 14px; writing-mode: vertical-rl; letter-spacing: .1em; }
+.slot-word { font-family: var(--fude); font-size: 22px; }
+.mini-tanzaku {
+  writing-mode: vertical-rl; height: 166px; width: 78px; padding: 10px 6px; border-radius: 2px;
+  font-family: var(--fude); font-size: 17px; line-height: 1.5; display: block;
+  background: linear-gradient(#e4d7f0 0 10%, #fffdf6 10% 90%, #d9e6d3 90%); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 3px 3px 0 rgba(60,40,20,.12);
+}
+.mini-tanzaku span { display: block; }
+.mini-tanzaku span:nth-child(2) { padding-top: .8em; } .mini-tanzaku span:nth-child(3) { padding-top: 1.6em; }
+.easy-guide { text-align: center; font-family: var(--mincho); font-size: 14px; margin: 12px 0 8px; min-height: 20px; }
+.easy-guide b { font-family: var(--fude); font-weight: 400; color: var(--shu); font-size: 17px; }
+.chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chip {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 12px 6px 8px;
+  border-radius: 3px; border: 1px solid #b89c6c; color: var(--ink);
+  background: linear-gradient(90deg, rgba(0,0,0,.05), transparent 12%, transparent 88%, rgba(0,0,0,.06)), repeating-linear-gradient(178deg, #f1e3c6 0 4px, #ecdcbc 4px 7px);
+  box-shadow: 0 2px 0 #b89c6c, 0 4px 6px rgba(60,40,20,.12); transition: transform .12s;
+  animation: deal .35s ease both;
+}
+.chip:nth-child(2) { animation-delay: .04s; } .chip:nth-child(3) { animation-delay: .08s; } .chip:nth-child(4) { animation-delay: .12s; } .chip:nth-child(5) { animation-delay: .16s; } .chip:nth-child(6) { animation-delay: .2s; }
+@keyframes deal { from { opacity: 0; transform: translateY(8px) rotate(-2deg); } }
+.chip:active { transform: translateY(2px); }
+.chip.on { background: var(--ai); color: #fff; border-color: var(--ai-d); box-shadow: 0 2px 0 var(--ai-d); }
+.chip-w { font-family: var(--fude); font-size: 21px; }
+.chip-y { font-size: 11px; color: var(--ink2); letter-spacing: .05em; }
+.chip.on .chip-y { color: rgba(255,255,255,.75); }
+.chip-m { position: absolute; top: 3px; right: 5px; font-size: 11px; font-weight: 700; color: var(--ink2); }
+.chip-m.over { color: var(--shu); }
+.chip-k { position: absolute; top: 4px; left: 5px; font-family: var(--fude); font-size: 11px; color: #fff; background: var(--sashi, var(--shu)); border-radius: 2px; padding: 0 3px; line-height: 1.5; }
+.easy-tools { margin-top: 12px; }
+.easy-tools .btn { font-size: 13px; padding: 10px 4px; }
+
+/* ---- 番付 ---- */
+.bz-tabs { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.bz-board {
+  background: #fbf7ec; border: 3px double var(--ink); padding: 8px 6px 10px; border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(60,40,20,.15);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.02 .4' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .42 0 0 0 0 .3 0 0 0 .14 -.04'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+.bz-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 4px; border-bottom: 2px solid var(--ink); padding: 0 6px 6px; margin-bottom: 4px; }
+.bz-title { font-family: var(--fude); font-size: 25px; letter-spacing: .12em; white-space: nowrap; }
+.bz-note { text-align: right; }
+.bz-basho, .bz-note { font-family: var(--mincho); font-size: 11px; color: var(--ink2); }
+.bz-note { color: var(--shu); }
+.bz-cols { display: flex; flex-direction: row-reverse; overflow-x: auto; overflow-y: hidden; height: 430px; scroll-snap-type: x proximity; direction: ltr; }
+.bz-col {
+  flex: 0 0 auto; width: 66px; writing-mode: vertical-rl; display: flex; flex-direction: row; align-items: center;
+  padding: 8px 4px; border-left: 1px solid rgba(28,23,20,.25); font-family: var(--mincho); scroll-snap-align: end;
+}
+.bz-col:first-child { border-left: 0; }
+.bz-rank { font-family: var(--fude); font-size: 15px; color: var(--ink2); letter-spacing: .05em; }
+.bz-col.sanyaku .bz-rank { color: var(--shu); font-size: 18px; }
+.bz-col.yokozuna { background: linear-gradient(90deg, rgba(201,164,87,.15), rgba(201,164,87,.28)); }
+.bz-col.yokozuna .bz-rank { font-size: 22px; }
+.bz-name { font-family: var(--fude); font-size: 21px; margin-top: 8px; color: var(--ink); max-height: 140px; overflow: hidden; }
+.bz-col.yokozuna .bz-name { font-size: 25px; }
+.bz-score { font-size: 13px; font-weight: 800; margin-top: 6px; color: var(--shu); }
+.bz-ku { font-family: var(--fude); font-size: 13px; line-height: 1.3; margin-top: 10px; color: var(--ink); flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.bz-odai { font-size: 10px; color: var(--ink2); margin-top: 6px; opacity: .8; }
+.bz-col.mine { box-shadow: inset 0 0 0 2px var(--ai); background-color: rgba(31,58,99,.06); }
+.bz-entry { text-align: center; border-color: var(--shu); }
+.bz-entry-title { font-family: var(--fude); font-size: 19px; color: var(--shu); margin-bottom: 8px; }
+.bz-entry-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.bz-entry-row input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 4px; border: 1.5px solid var(--line); background: #fff; }
+.bz-entry-row .btn { width: auto; padding: 10px 14px; }
+
+@media (max-width: 380px) {
+  .noren-cloth { min-height: 132px; }
+  .noren-label { font-size: 18px; }
+  .fuda { width: 52px; height: 104px; }
+  .fuda-row { gap: 10px; }
+}
+
+.rank-change .big { font-size: 21px; }
+.rank-change.up .big { font-size: 26px; }
+.bz-rank, .bz-name, .bz-score, .bz-odai { flex: 0 0 auto; white-space: nowrap; }
+.bz-name { max-height: none; }

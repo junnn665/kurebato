@@ -12,11 +12,14 @@
 
   // ---------- screens ----------
   let current = "home";
+  let curOdai = null; // いま見ているお題（季節の演出に使う）
+  const ODAI_SCREENS = ["soloOdai", "write", "easy", "judging", "soloResult", "mpVote", "mpReveal"];
   function show(id) {
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== id));
     current = id;
     window.scrollTo(0, 0);
     if (id === "home") renderHome();
+    if (window.Fuzei) window.Fuzei.setSeason(ODAI_SCREENS.includes(id) && curOdai ? curOdai.season : "");
   }
   document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
 
@@ -33,6 +36,8 @@
   const SEASON_LABEL = { 春: "春", 夏: "夏", 秋: "秋", 冬: "冬", 新年: "新年", 梅雨: "梅雨", 四季: "いつでも" };
   function odaiHtml(o, mini) {
     if (!o) return "";
+    curOdai = o;
+    if (window.Fuzei && ODAI_SCREENS.includes(current)) window.Fuzei.setSeason(o.season);
     return `<div class="odai${mini ? " mini" : ""}">
       <div class="odai-photo" style="background:linear-gradient(135deg,${o.bg[0]},${o.bg[1]})">${o.scene}</div>
       <span class="odai-label">お題</span><span class="odai-season">${SEASON_LABEL[o.season] || o.season}</span>
@@ -83,6 +88,8 @@
   // ---------- ホーム ----------
   function renderHome() {
     const kucho = ls.get("kure.kucho", []);
+    const T = window.Fuzei && window.Fuzei.today;
+    if (T) $("jikou").innerHTML = `<span class="j-mon">${T.getsumei}</span><span class="j-sek">${T.sekki}のころ</span><span class="j-sea">季は${T.season}</span>`;
     $("rankBadge").innerHTML = `🏅 <b>${rankLabel()}</b>${kucho.length ? `<span class="note">・${kucho.length}句</span>` : ""}`;
   }
 
@@ -195,16 +202,27 @@
   }
 
   // ---------- ひとり：査定 ----------
-  function soloSubmit(result, lines) {
+  let lastMode = "solo";
+  let lastEntry = null;
+  function soloSubmit(result, lines, mode, odai) {
+    mode = mode === "easy" ? "easy" : "solo";
+    odai = odai || W.odai;
+    lastMode = mode;
     show("judging");
     setTimeout(() => {
-      const rc = applyRank(result.score);
-      const entry = { t: Date.now(), lines, score: result.score, verdict: result.verdict, odai: W.odai.id, mode: "solo" };
-      const kucho = ls.get("kure.kucho", []); kucho.unshift(entry); ls.set("kure.kucho", kucho.slice(0, 300));
-      renderResult($("soloResultBody"), result, { name: "", odai: W.odai });
-      $("rankChange").innerHTML = `<div class="rank-change ${rc.kind === "up" ? "up" : rc.kind === "down" ? "down" : ""}">${esc(rc.text)}<span class="big">${rc.kind === "up" || rc.kind === "down" ? `${esc(rc.before)} → ${esc(rc.after)}` : esc(rc.after)}</span></div>`;
-      lastShare = { lines, score: result.score, verdict: result.verdict, odai: W.odai };
+      const entry = { t: Date.now(), lines, score: result.score, verdict: result.verdict, odai: odai.id, mode };
+      addKucho(entry);
+      renderResult($("soloResultBody"), result, { name: "", odai });
+      if (mode === "easy") {
+        $("rankChange").innerHTML = `<div class="rank-change">🔰 はじめての一句（段位には影響しません）<span class="big">${result.score >= 70 ? "見事！ 次は「一句詠む」で自分の言葉を" : "札を入れかえて、もう一句"}</span></div>`;
+      } else {
+        const rc = applyRank(result.score);
+        $("rankChange").innerHTML = `<div class="rank-change ${rc.kind === "up" ? "up" : rc.kind === "down" ? "down" : ""}">${esc(rc.text)}<span class="big">${rc.kind === "up" || rc.kind === "down" ? `${esc(rc.before)} → ${esc(rc.after)}` : esc(rc.after)}</span></div>`;
+      }
+      lastShare = { lines, score: result.score, verdict: result.verdict, odai };
+      lastEntry = { lines, score: result.score, odai: odai.id, div: mode === "easy" ? "easy" : "normal", t: entry.t };
       show("soloResult");
+      if (window.Banzuke) window.Banzuke.offer(lastEntry);
     }, 1700);
   }
   const vClass = (v) => (v === "才能アリ" ? "ari" : v === "凡人" ? "bon" : v === "才能ナシ" ? "nashi" : "none");
@@ -225,7 +243,10 @@
         <p class="note">音数：${r.moras.join("・")}（${r.reads.map((x) => esc(x.yomi.replace(/〇/g, "？"))).join(" / ")}）</p>
       </div>`;
   }
-  $("againBtn").addEventListener("click", () => { soloOdai = pickOdai(soloSeason, soloOdai && soloOdai.id); renderSoloOdai(); show("soloOdai"); });
+  $("againBtn").addEventListener("click", () => {
+    if (lastMode === "easy") { startEasy(); return; }
+    soloOdai = pickOdai(soloSeason, soloOdai && soloOdai.id); renderSoloOdai(); show("soloOdai");
+  });
 
   let lastShare = null;
   $("shareBtn").addEventListener("click", () => {
@@ -251,7 +272,7 @@
       const d = new Date(k.t);
       return `<div class="kitem"><div class="k-text">${k.lines.map(esc).join("　")}</div>
         <div class="k-score">${k.score}<small class="v-${vClass(k.verdict)}">${esc(k.verdict)}</small></div>
-        <div class="k-meta">お題「${esc(o.title)}」・${d.getMonth() + 1}/${d.getDate()}${k.mode === "mp" ? "・⚔️対戦" + (k.rank ? ` ${k.rank}位` : "") : ""}</div></div>`;
+        <div class="k-meta">お題「${esc(o.title)}」・${d.getMonth() + 1}/${d.getDate()}${k.mode === "mp" ? "・⚔️対戦" + (k.rank ? ` ${k.rank}位` : "") : k.mode === "easy" ? "・🔰はじめて" : ""}</div></div>`;
     }).join("") : `<div class="empty">まだ一句もありません。<br>ひとりで査定 か 対戦で一句詠もう</div>`;
   }
   function addKucho(entry) { const k = ls.get("kure.kucho", []); k.unshift(entry); ls.set("kure.kucho", k.slice(0, 300)); }
@@ -269,8 +290,80 @@
 
   $("howtoBtn").addEventListener("click", () => show("howto"));
 
+  // ---------- はじめての一句（言葉の札をえらぶ） ----------
+  const K = window.KOTOBA;
+  const LINE_NAMES = ["上五", "中七", "下五"];
+  const LINE_GUIDE = [
+    "まずは<b>上五</b>。季語の札から季節をえらぼう",
+    "つぎは<b>中七</b>。だれが・何が・どうしている？",
+    "さいごに<b>下五</b>。手に取れる“モノ”で止めると締まる",
+  ];
+  const E = { odai: null, picks: [null, null, null], active: 0, offers: [[], [], []] };
+  const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const take = (arr, n, not) => shuffle(arr.filter((x) => !not || !not.some((y) => y.w === x.w))).slice(0, n);
+  const todaySeason = () => (window.Fuzei ? window.Fuzei.today.season : "春");
+  function easySeason() {
+    const s = E.odai && E.odai.season;
+    return s === "梅雨" ? "夏" : !s || s === "四季" ? todaySeason() : s;
+  }
+  function makeOffer(i) {
+    const prev = E.offers[i];
+    let out;
+    if (i === 0) {
+      const s = easySeason();
+      const pool = s === "新年" ? [...K.kami.新年, ...K.kami.冬] : K.kami[s];
+      out = [...take(pool, 4, prev), ...take(K.kami.無季, 1, prev), ...take(K.kami.罠, 1, prev)];
+    } else if (i === 1) {
+      out = [...take(K.naka.ふつう, 5, prev), ...take(K.naka.罠, 1, prev)];
+    } else {
+      out = [...take(K.shimo.ふつう, 4, prev), ...take(K.shimo.季, 1, prev), ...take(K.shimo.罠, 1, prev)];
+    }
+    E.offers[i] = shuffle(out);
+  }
+  function startEasy(keepOdai) {
+    if (!keepOdai || !E.odai) E.odai = pickOdai("", E.odai && E.odai.id);
+    E.picks = [null, null, null]; E.active = 0; E.offers = [[], [], []];
+    [0, 1, 2].forEach(makeOffer);
+    show("easy");
+    renderEasy();
+  }
+  function renderEasy() {
+    $("easyOdai").innerHTML = odaiHtml(E.odai, true);
+    $("easySlots").innerHTML = E.picks.map((p, i) => `<button class="slot${i === E.active ? " on" : ""}${p ? " filled" : ""}" data-i="${i}"><span class="slot-name">${LINE_NAMES[i]}</span><span class="slot-word">${p ? esc(p.w) : "　？　"}</span></button>`).join("");
+    $("easyPreview").innerHTML = `<div class="mini-tanzaku">${E.picks.map((p) => `<span>${p ? esc(p.w) : "　"}</span>`).join("")}</div>`;
+    $("easyGuide").innerHTML = E.picks.every(Boolean) ? "そろいました。札を入れかえるなら、上の欄をタップ" : LINE_GUIDE[E.active];
+    const kigoIn = (w) => window.KIGO.find(w).length > 0;
+    $("easyChips").innerHTML = E.offers[E.active].map((x, j) => {
+      const sel = E.picks[E.active] && E.picks[E.active].w === x.w;
+      const mora = J.countMora(x.y);
+      return `<button class="chip${sel ? " on" : ""}" data-j="${j}"><span class="chip-w">${esc(x.w)}</span><span class="chip-y">${esc(x.y)}</span><span class="chip-m${mora !== (E.active === 1 ? 7 : 5) ? " over" : ""}">${mora}</span>${kigoIn(x.w) ? '<span class="chip-k">季</span>' : ""}</button>`;
+    }).join("");
+    $("easySubmit").disabled = !E.picks.every(Boolean);
+  }
+  $("easyBtn").addEventListener("click", () => startEasy(false));
+  $("easySlots").addEventListener("click", (e) => { const b = e.target.closest(".slot"); if (!b) return; E.active = Number(b.dataset.i); renderEasy(); });
+  $("easyChips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    E.picks[E.active] = E.offers[E.active][Number(b.dataset.j)];
+    const next = E.picks.findIndex((p) => !p);
+    if (next >= 0) E.active = next;
+    renderEasy();
+  });
+  $("easyMore").addEventListener("click", () => { makeOffer(E.active); renderEasy(); });
+  $("easyOdaiNext").addEventListener("click", () => { E.odai = pickOdai("", E.odai && E.odai.id); E.offers[0] = []; makeOffer(0); renderEasy(); });
+  $("easyEdit").addEventListener("click", () => {
+    E.picks.forEach((p, i) => { L[i].value = p ? p.w : ""; YE[i].value = ""; });
+    openWrite({ odai: E.odai, mode: "solo", keep: true, onSubmit: soloSubmit, onBack: () => show("easy") });
+  });
+  $("easySubmit").addEventListener("click", () => {
+    if (!E.picks.every(Boolean)) return;
+    const lines = E.picks.map((p) => p.w);
+    const result = J.judge({ lines, yomi: E.picks.map((p) => p.y), odai: E.odai });
+    soloSubmit(result, lines, "easy", E.odai);
+  });
+
   // 他のファイル（net.js）から使う
-  window.App = { show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); },
+  window.App = { get lastEntry() { return lastEntry; }, show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); },
     lockWrite(lines) { if (!W) return; W.submitted = true; (lines || []).forEach((l, i) => { if (L[i] && !L[i].value) L[i].value = l; }); setWriteLocked(true); updateMora(); } };
 
   renderHome();
