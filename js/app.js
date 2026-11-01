@@ -379,7 +379,9 @@
     "つぎは<b>中七</b>。だれが・何が・どうしている？",
     "さいごに<b>下五</b>。手に取れる“モノ”で止めると締まる",
   ];
-  const E = { odai: null, picks: [null, null, null], active: 0, offers: [[], [], []] };
+  // mp: 対戦で使うときの設定 { deadline, now, onSubmit, onBack, title }
+  const E = { odai: null, picks: [null, null, null], active: 0, offers: [[], [], []], mp: null, submitted: false };
+  let easyTimer = null;
   const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const take = (arr, n, not) => shuffle(arr.filter((x) => !not || !not.some((y) => y.w === x.w))).slice(0, n);
   const todaySeason = () => (window.Fuzei ? window.Fuzei.today.season : "春");
@@ -401,12 +403,58 @@
     }
     E.offers[i] = shuffle(out);
   }
-  function startEasy(keepOdai) {
-    if (!keepOdai || !E.odai) E.odai = pickOdai("", E.odai && E.odai.id);
-    E.picks = [null, null, null]; E.active = 0; E.offers = [[], [], []];
+  function startEasy(keepOdai, mp) {
+    E.mp = mp || null;
+    if (mp) E.odai = mp.odai;
+    else if (!keepOdai || !E.odai) E.odai = pickOdai("", E.odai && E.odai.id);
+    E.picks = [null, null, null]; E.active = 0; E.offers = [[], [], []]; E.submitted = false;
     [0, 1, 2].forEach(makeOffer);
+    // 対戦のときは、お題の変更と「自分で直す」はなし。タイマーと進み具合を出す
+    $("easyOdaiNext").classList.toggle("hidden", !!mp);
+    $("easyEdit").classList.toggle("hidden", !!mp);
+    $("easyProgress").classList.toggle("hidden", !mp);
+    $("easyTimer").classList.toggle("hidden", !mp);
+    $("easyTitle").textContent = mp ? mp.title || "言葉の札で一句" : "はじめての一句";
+    $("easyBack").textContent = mp ? "‹ 部屋を出る" : "‹ もどる";
+    $("easySubmit").textContent = mp ? "📮 提出する" : "🖌️ 査定してもらう";
+    $("easyMsg").textContent = "";
+    clearInterval(easyTimer);
+    if (mp) { easyTimer = setInterval(tickEasy, 250); tickEasy(); }
     show("easy");
     renderEasy();
+  }
+  function tickEasy() {
+    if (!E.mp) { clearInterval(easyTimer); return; }
+    const left = Math.max(0, E.mp.deadline - E.mp.now());
+    const sec = Math.ceil(left / 1000);
+    $("easyTimer").textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+    $("easyTimer").classList.toggle("hurry", sec <= 20);
+    if (left <= 600 && !E.submitted) {
+      // 時間切れ：空いている欄は、出ている札から自動で埋めて提出
+      E.picks = E.picks.map((p, i) => p || E.offers[i].find((x) => !/寂し|悲し|美し|思い出|綺麗|星降る|走って/.test(x.w)) || E.offers[i][0]);
+      submitEasy(true);
+    }
+    if (left <= 0) clearInterval(easyTimer);
+  }
+  function lockEasy(on) {
+    $("easySubmit").disabled = on || !E.picks.every(Boolean);
+    $("easyMore").disabled = on;
+    $("easyChips").querySelectorAll("button").forEach((b) => (b.disabled = on));
+    $("easySlots").querySelectorAll("button").forEach((b) => (b.disabled = on));
+  }
+  function submitEasy(auto) {
+    if (E.submitted || !E.picks.every(Boolean)) return;
+    const lines = E.picks.map((p) => p.w);
+    const result = J.judge({ lines, yomi: E.picks.map((p) => p.y), odai: E.odai });
+    if (E.mp) {
+      E.submitted = true;
+      renderEasy();
+      lockEasy(true);
+      $("easyMsg").textContent = auto ? "⏰ 時間切れ。札をそろえて提出しました" : "📮 提出しました。みんなを待っています…";
+      E.mp.onSubmit(result, lines, null, auto);
+      return;
+    }
+    soloSubmit(result, lines, "easy", E.odai);
   }
   function renderEasy() {
     $("easyOdai").innerHTML = odaiHtml(E.odai, true);
@@ -419,12 +467,14 @@
       const mora = J.countMora(x.y);
       return `<button class="chip${sel ? " on" : ""}" data-j="${j}"><span class="chip-w">${esc(x.w)}</span><span class="chip-y">${esc(x.y)}</span><span class="chip-m${mora !== (E.active === 1 ? 7 : 5) ? " over" : ""}">${mora}</span>${kigoIn(x.w) ? '<span class="chip-k">季</span>' : ""}</button>`;
     }).join("");
-    $("easySubmit").disabled = !E.picks.every(Boolean);
+    $("easySubmit").disabled = E.submitted || !E.picks.every(Boolean);
+    if (E.submitted) lockEasy(true);
   }
   $("easyBtn").addEventListener("click", () => startEasy(false));
-  $("easySlots").addEventListener("click", (e) => { const b = e.target.closest(".slot"); if (!b) return; E.active = Number(b.dataset.i); renderEasy(); });
+  $("easyBack").addEventListener("click", () => { if (E.mp && E.mp.onBack) E.mp.onBack(); else show("home"); });
+  $("easySlots").addEventListener("click", (e) => { const b = e.target.closest(".slot"); if (!b || E.submitted) return; E.active = Number(b.dataset.i); renderEasy(); });
   $("easyChips").addEventListener("click", (e) => {
-    const b = e.target.closest(".chip"); if (!b) return;
+    const b = e.target.closest(".chip"); if (!b || E.submitted) return;
     E.picks[E.active] = E.offers[E.active][Number(b.dataset.j)];
     const next = E.picks.findIndex((p) => !p);
     if (next >= 0) E.active = next;
@@ -436,15 +486,13 @@
     E.picks.forEach((p, i) => { L[i].value = p ? p.w : ""; YE[i].value = ""; });
     openWrite({ odai: E.odai, mode: "solo", keep: true, onSubmit: soloSubmit, onBack: () => show("easy") });
   });
-  $("easySubmit").addEventListener("click", () => {
-    if (!E.picks.every(Boolean)) return;
-    const lines = E.picks.map((p) => p.w);
-    const result = J.judge({ lines, yomi: E.picks.map((p) => p.y), odai: E.odai });
-    soloSubmit(result, lines, "easy", E.odai);
-  });
+  $("easySubmit").addEventListener("click", () => submitEasy(false));
 
   // 他のファイル（net.js）から使う
-  window.App = { get lastEntry() { return lastEntry; }, show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); },
+  window.App = { get lastEntry() { return lastEntry; }, show, toast, esc, ls, odaiHtml, odaiById, pickOdai, openWrite, renderResult, vClass, addKucho, get current() { return current; }, get write() { return W; }, setWriteMsg(t, info) { $("writeMsg").textContent = t; $("writeMsg").className = "msg" + (info ? " info" : ""); }, stopTimer() { clearInterval(timerId); clearInterval(easyTimer); },
+    openEasyMp(opts) { startEasy(false, opts); },
+    get easy() { return E; },
+    lockEasy(lines) { E.submitted = true; if (lines) E.picks = lines.map((w) => ({ w, y: "" })); renderEasy(); lockEasy(true); $("easyMsg").textContent = "📮 提出しました。みんなを待っています…"; },
     lockWrite(lines) { if (!W) return; W.submitted = true; (lines || []).forEach((l, i) => { if (L[i] && !L[i].value) L[i].value = l; }); setWriteLocked(true); updateMora(); } };
 
   renderHome();

@@ -814,3 +814,11 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .sk-diff b { color: var(--shu); font-weight: 700; }
 .k-suikou { grid-column: 1 / -1; justify-self: start; border: 1px solid var(--shu); color: var(--shu); background: #fff; border-radius: 2px; font-size: 12px; padding: 2px 8px; font-family: var(--mincho); }
 .mk-tan .mk-final { padding-top: .2em !important; }
+
+/* ---- 対戦：締め切り・言葉の札で参加 ---- */
+.mp-close { margin-top: 6px; font-size: 14px; background: #fff; }
+.easy-toggle { display: block; width: 100%; margin: 4px 0 10px; padding: 10px 12px; border: 1.5px dashed var(--line); border-radius: 3px; background: #fff; font-family: var(--mincho); font-size: 14px; text-align: center; }
+.easy-toggle b { color: var(--ink2); }
+.easy-toggle.on { border: 1.5px solid #7b4a2a; background: #fbf1e6; }
+.easy-toggle.on b { color: #7b4a2a; }
+#easy .bar .timer { margin-left: auto; }

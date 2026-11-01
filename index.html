@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -159,12 +159,14 @@
     </div>
     <button class="btn big primary" id="submitBtn">🖌️ 査定してもらう</button>
     <p id="writeMsg" class="msg"></p>
+    <button class="btn hidden mp-close" id="writeClose">⏩ 締め切って次へ（ホスト）</button>
   </section>
 
   <!-- ===== はじめての一句（言葉の札） ===== -->
   <section id="easy" class="screen hidden">
-    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>はじめての一句</h2></header>
+    <header class="bar"><button class="back" id="easyBack">‹ もどる</button><h2 id="easyTitle">はじめての一句</h2><div id="easyTimer" class="timer hidden">3:00</div></header>
     <div id="easyOdai"></div>
+    <div id="easyProgress" class="mp-progress hidden"></div>
     <div class="easy-board">
       <div class="easy-slots" id="easySlots"></div>
       <div class="easy-preview" id="easyPreview"></div>
@@ -177,6 +179,8 @@
       <button class="btn" id="easyEdit">✍️ 自分で直す</button>
     </div>
     <button class="btn big primary" id="easySubmit" disabled>🖌️ 査定してもらう</button>
+    <p id="easyMsg" class="msg info"></p>
+    <button class="btn hidden mp-close" id="easyClose">⏩ 締め切って次へ（ホスト）</button>
     <p class="note center">札には「罠」もまじっています。先生にしかられて覚えよう</p>
   </section>
 
@@ -298,6 +302,7 @@
     </div>
     <div class="paper">
       <div class="lobby-rule" id="lobbyRule"></div>
+      <button class="easy-toggle" id="mpEasyToggle"></button>
       <ul class="players" id="lobbyPlayers"></ul>
     </div>
     <button class="btn big primary hidden" id="mpStart">スタート</button>
@@ -312,6 +317,7 @@
     <div id="voteList" class="vote-list"></div>
     <button class="btn big primary" id="voteSubmit">査定を送る</button>
     <p class="msg info" id="voteMsg"></p>
+    <button class="btn hidden mp-close" id="voteClose">⏩ 締め切って結果発表へ（ホスト）</button>
   </section>
 
   <!-- ===== 対戦：結果発表 ===== -->
@@ -335,19 +341,19 @@
   <div id="toasts" class="toasts"></div>
 </div>
 
-<script src="lib/qrcode.min.js?v=1"></script>
-<script src="js/fuzei.js?v=3"></script>
-<script src="js/kigo-alias.js?v=4"></script>
-<script src="js/kigo.js?v=4"></script>
-<script src="js/kotoba.js?v=3"></script>
-<script src="js/odai.js?v=3"></script>
-<script src="js/judge.js?v=3"></script>
-<script src="js/app.js?v=5"></script>
-<script src="js/zukan.js?v=4"></script>
-<script src="js/shikishi.js?v=5"></script>
-<script src="js/tensaku.js?v=5"></script>
-<script src="js/meiku.js?v=5"></script>
-<script src="js/net.js?v=4"></script>
-<script src="js/banzuke.js?v=3"></script>
+<script src="lib/qrcode.min.js?v=6"></script>
+<script src="js/fuzei.js?v=6"></script>
+<script src="js/kigo-alias.js?v=6"></script>
+<script src="js/kigo.js?v=6"></script>
+<script src="js/kotoba.js?v=6"></script>
+<script src="js/odai.js?v=6"></script>
+<script src="js/judge.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
+<script src="js/zukan.js?v=6"></script>
+<script src="js/shikishi.js?v=6"></script>
+<script src="js/tensaku.js?v=6"></script>
+<script src="js/meiku.js?v=6"></script>
+<script src="js/net.js?v=6"></script>
+<script src="js/banzuke.js?v=6"></script>
 </body>
 </html>

@@ -103,7 +103,14 @@
   const cfg = () => (R && R.cfg) || { rounds: 3, time: 180, vote: 1, season: "" };
   const isHost = () => !!R && R.host === PID;
   const players = () => (R && R.players) || {};
-  const online = (pid) => { const p = players()[pid]; return !!p && p.online !== false; };
+  // スマホが眠って通信だけ残っている人は、45秒だまっていたら「いない」あつかい
+  const ALIVE_MS = 45000;
+  const online = (pid) => {
+    const p = players()[pid];
+    if (!p || p.online === false) return false;
+    if (pid === PID) return true;
+    return !p.seen || !NET || NET.now() - p.seen < ALIVE_MS;
+  };
   const entrants = () => Object.keys((R && R.entrants) || {});
   const amEntrant = () => !!(R && R.entrants && R.entrants[PID]);
   const nameOf = (pid) => (players()[pid] && players()[pid].name) || "だれか";
@@ -175,6 +182,7 @@
     joinedAt = NET.now();
     openedWrite = builtVote = builtReveal = savedKucho = -1;
     NET.onDisconnectSet(`${KEY(c)}/players/${PID}/online`, false);
+    lastBeat = 0;
     if (unsub) unsub();
     unsub = NET.on(KEY(c), (v) => { R = v; onRoom(); });
     clearInterval(tickId);
@@ -231,6 +239,7 @@
   // ---------- 待合室 ----------
   let qrFor = null;
   function renderLobby() {
+    ["writeClose", "easyClose", "voteClose"].forEach((id) => $(id).classList.add("hidden"));
     if (ph().s === "lobby") { openedWrite = builtVote = builtReveal = savedKucho = -1; revealDone = false; }
     A.stopTimer();
     if (A.current !== "mpLobby") A.show("mpLobby");
@@ -249,7 +258,10 @@
       chip("season", c.season ? `お題：${c.season}` : "お題：ぜんぶの季節"),
     ].join("") + (host ? `<span class="note" style="background:none">タップで変更</span>` : "");
     const list = Object.entries(players()).sort((a, b) => (a[1].joined || 0) - (b[1].joined || 0));
-    $("lobbyPlayers").innerHTML = list.map(([id, p]) => `<li class="${p.online === false ? "off" : ""}">${esc(p.name)}${id === R.host ? '<span class="tag">ホスト</span>' : ""}${id === PID ? '<span class="tag me">あなた</span>' : ""}<span class="st">${p.online === false ? "通信待ち" : R.entrants && R.entrants[id] && ph().s !== "lobby" ? "対戦中" : ""}</span></li>`).join("");
+    $("lobbyPlayers").innerHTML = list.map(([id, p]) => `<li class="${p.online === false ? "off" : ""}">${p.easy ? "🔰" : ""}${esc(p.name)}${id === R.host ? '<span class="tag">ホスト</span>' : ""}${id === PID ? '<span class="tag me">あなた</span>' : ""}<span class="st">${p.online === false ? "通信待ち" : R.entrants && R.entrants[id] && ph().s !== "lobby" ? "対戦中" : ""}</span></li>`).join("");
+    const meEasy = !!(players()[PID] && players()[PID].easy);
+    $("mpEasyToggle").innerHTML = meEasy ? "🔰 言葉の札で参加：<b>オン</b>（タップでオフ）" : "🔰 言葉の札で参加：<b>オフ</b>（はじめての人はタップ）";
+    $("mpEasyToggle").classList.toggle("on", meEasy);
     const n = list.filter(([, p]) => p.online !== false).length;
     $("mpStart").classList.toggle("hidden", !host);
     $("mpStart").textContent = n < 2 ? `スタート（ひとりでもOK）` : `スタート（${n}人）`;
@@ -261,6 +273,11 @@
     const k = b.dataset.k, arr = CYCLE[k];
     const next = arr[(arr.indexOf(cfg()[k]) + 1) % arr.length];
     NET.set(`${KEY(code)}/cfg/${k}`, next).catch((er) => A.toast(netError(er)));
+  });
+  $("mpEasyToggle").addEventListener("click", () => {
+    if (!code || !R) return;
+    const cur = !!(players()[PID] && players()[PID].easy);
+    NET.set(`${KEY(code)}/players/${PID}/easy`, !cur).catch((e) => A.toast(netError(e)));
   });
   $("inviteBtn").addEventListener("click", () => {
     const url = inviteUrl();
@@ -286,26 +303,36 @@
   function renderWrite() {
     const p = ph();
     const mine = subs(p.r)[PID];
+    const easy = !!(players()[PID] && players()[PID].easy);
     if (openedWrite !== p.r) {
       openedWrite = p.r;
       const odai = A.odaiById(R.odai[p.r]);
-      A.openWrite({
+      const opts = {
         odai, mode: "mp", deadline: p.dl, now: () => NET.now(),
         title: `第${p.r + 1}句 / 全${cfg().rounds}句`,
-        onSubmit: (res, lines, yomi, auto) => submitHaiku(p.r, res, lines, auto),
+        onSubmit: (res, lines, yomi, auto) => submitHaiku(p.r, res, lines, auto, easy),
         onBack: () => { if (confirm("部屋を出ますか？")) leave(); },
-      });
+      };
+      if (easy) A.openEasyMp(opts); else A.openWrite(opts);
       A.toast(`第${p.r + 1}句　お題「${esc(odai.title)}」`);
     }
     if (mine) {
-      if (A.write && !A.write.submitted) A.lockWrite(mine.lines);
-      A.setWriteMsg("📮 提出しました。みんなを待っています…", true);
+      if (easy) { if (A.easy && !A.easy.submitted) A.lockEasy(mine.lines); }
+      else {
+        if (A.write && !A.write.submitted) A.lockWrite(mine.lines);
+        A.setWriteMsg("📮 提出しました。みんなを待っています…", true);
+      }
     }
-    const ent = entrants().filter(online);
-    $("mpProgress").innerHTML = ent.map((id) => `<span class="${subs(p.r)[id] ? "done" : ""}">${subs(p.r)[id] ? "✓ " : "✍️ "}${esc(nameOf(id))}</span>`).join("");
+    const ent = entrants().filter((id) => online(id) || subs(p.r)[id]);
+    const chips = ent.map((id) => `<span class="${subs(p.r)[id] ? "done" : ""}">${subs(p.r)[id] ? "✓ " : "✍️ "}${players()[id] && players()[id].easy ? "🔰" : ""}${esc(nameOf(id))}</span>`).join("");
+    $("mpProgress").innerHTML = chips;
+    $("easyProgress").innerHTML = chips;
+    $("writeClose").classList.toggle("hidden", !isHost());
+    $("easyClose").classList.toggle("hidden", !isHost());
   }
-  function submitHaiku(r, res, lines, auto) {
+  function submitHaiku(r, res, lines, auto, easy) {
     const data = {
+      easy: !!easy,
       lines, score: res.score, verdict: res.verdict, summary: res.summary,
       advice: res.advice, pts: res.pts.filter((p) => p.d !== 0).map((p) => [p.d, p.t]).slice(0, 8),
       moras: res.moras, empty: lines.every((l) => !l), t: NET.now(),
@@ -321,6 +348,8 @@
   const hash = (s) => { let h = 7; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
   function renderVote() {
     const p = ph();
+    ["writeClose", "easyClose"].forEach((id) => $(id).classList.add("hidden"));
+    $("voteClose").classList.toggle("hidden", !isHost());
     if (A.current !== "mpVote") A.show("mpVote");
     const all = Object.entries(subs(p.r)).filter(([, s]) => !s.empty);
     if (builtVote !== p.r) {
@@ -350,7 +379,8 @@
     if (voted) {
       const need = entrants().filter((id) => online(id) && subs(p.r)[id]);
       const done = need.filter((id) => votes(p.r)[id]).length;
-      $("voteMsg").textContent = `査定を送りました。みんなを待っています（${done}/${need.length}）`;
+      const waitNames = need.filter((id) => !votes(p.r)[id]).map(nameOf);
+      $("voteMsg").textContent = `査定を送りました。みんなを待っています（${done}/${need.length}）${waitNames.length ? "　まだ：" + waitNames.join("・") : ""}`;
     }
   }
   function setVoteCard(card) {
@@ -412,6 +442,7 @@
   // ---------- 結果発表 ----------
   let revealTimers = [];
   let revealDone = false;
+  let revealDoneAt = 0;
   function renderReveal() {
     const p = ph();
     if (A.current !== "mpReveal") A.show("mpReveal");
@@ -419,6 +450,7 @@
     if (builtReveal !== p.r) {
       builtReveal = p.r;
       revealDone = false;
+      revealDoneAt = 0;
       revealTimers.forEach(clearTimeout); revealTimers = [];
       $("revealTitle").textContent = `第${p.r + 1}句 結果発表`;
       $("revealOdai").innerHTML = A.odaiHtml(A.odaiById(R.odai[p.r]), true);
@@ -453,6 +485,7 @@
             <table>${tot.map((x, i) => `<tr class="${i === 0 ? "win" : ""}"><td class="kn">${kansuji(i + 1)}位</td><td>${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</td><td class="n">${x.sum}点</td><td class="n">才能アリ×${x.ari}</td></tr>`).join("")}</table></div>`;
         }
         revealDone = true;
+        revealDoneAt = Date.now();
         afterReveal();
       }, t + 200));
     } else if (revealDone) afterReveal();
@@ -464,6 +497,10 @@
       $("mpNext").classList.remove("hidden");
       $("mpNext").textContent = last ? "待合室にもどる（もう一回）" : "つぎのお題へ";
       $("revealMsg").textContent = "";
+    } else if (revealDoneAt && Date.now() - revealDoneAt > 20000) {
+      $("mpNext").classList.remove("hidden");
+      $("mpNext").textContent = last ? "待合室にもどる（ホストのかわりに）" : "つぎのお題へ（ホストのかわりに）";
+      $("revealMsg").textContent = "ホストからの反応がないので、だれでも進められます";
     } else {
       $("mpNext").classList.add("hidden");
       $("revealMsg").textContent = last ? "ホストが待合室にもどすのを待っています" : "ホストが次のお題に進むのを待っています";
@@ -475,7 +512,7 @@
     const vc = A.vClass(x.verdict);
     const s = x.sub;
     return `<div class="rcard ${vc === "ari" ? "ari" : ""} ${x.rank === 1 ? "first" : ""}">
-      <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
+      <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${s && s.easy ? "🔰" : ""}${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
       <div class="rbreak">先生 ${x.teacher}点${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>
@@ -500,39 +537,58 @@
     }
   }
   $("mpNext").addEventListener("click", () => busy($("mpNext"), async () => {
-    if (!isHost()) return;
     const p = ph();
+    if (p.s !== "reveal") return;
     const last = p.r >= cfg().rounds - 1;
+    // ホストでなくても押せる（ホストが20秒反応しないとき）。二重に進まないよう、いまの段階を確かめてから
     try {
       if (last) {
-        await NET.update(KEY(code), { ph: { s: "lobby", r: 0, dl: 0 }, entrants: null, sub: null, votes: null });
+        const res = await NET.tx(`${KEY(code)}/ph`, (cur) => (cur && cur.s === "reveal" && cur.r === p.r ? { s: "lobby", r: 0, dl: 0 } : undefined));
+        if (res.committed) await NET.update(KEY(code), { entrants: null, sub: null, votes: null });
       } else {
-        const ent = { ...(R.entrants || {}) };
-        await NET.update(KEY(code), { entrants: ent, ph: { s: "write", r: p.r + 1, dl: NET.now() + cfg().time * 1000 + 2000 } });
+        await NET.tx(`${KEY(code)}/ph`, (cur) => (cur && cur.s === "reveal" && cur.r === p.r ? { s: "write", r: p.r + 1, dl: NET.now() + cfg().time * 1000 + 2000 } : undefined));
       }
     } catch (e) { A.toast(netError(e)); }
   }));
 
   // ---------- 進行（だれのスマホからでも進められる） ----------
+  let lastBeat = 0;
   function tick() {
     if (!R || !code) return;
     const p = ph();
     const now = NET.now();
+    if (now - lastBeat > 15000) { lastBeat = now; NET.set(`${KEY(code)}/players/${PID}/seen`, now).catch(() => {}); }
+    // ホストが結果発表から進めないときは、20秒たったらだれでも進められる
+    if (p.s === "reveal" && revealDone && !isHost() && $("mpNext").classList.contains("hidden") && Date.now() - revealDoneAt > 20000) afterReveal();
     if (p.s === "write") {
       const ent = entrants().filter(online);
       const allIn = ent.length > 0 && ent.every((id) => subs(p.r)[id]);
-      if (allIn || now > p.dl + 2500) {
-        const real = Object.values(subs(p.r)).filter((s) => !s.empty).length;
-        const goVote = cfg().vote && real >= 2;
-        const dl = now + Math.min(120, 25 + 15 * real) * 1000;
-        advance(p, goVote ? { s: "vote", r: p.r, dl } : { s: "reveal", r: p.r, dl: 0 });
-      }
+      if (allIn || now > p.dl + 2500) closeWrite();
     } else if (p.s === "vote") {
       const need = entrants().filter((id) => online(id) && subs(p.r)[id] && !subs(p.r)[id].empty);
       const allIn = need.every((id) => votes(p.r)[id]);
       if (allIn || now > p.dl + 2500) advance(p, { s: "reveal", r: p.r, dl: 0 });
     }
   }
+  function closeWrite() {
+    const p = ph();
+    if (p.s !== "write") return;
+    const real = Object.values(subs(p.r)).filter((x) => x && !x.empty).length;
+    const goVote = cfg().vote && real >= 2;
+    const dl = NET.now() + Math.min(120, 25 + 15 * real) * 1000;
+    advance(p, goVote ? { s: "vote", r: p.r, dl } : { s: "reveal", r: p.r, dl: 0 });
+  }
+  ["writeClose", "easyClose"].forEach((id) => $(id).addEventListener("click", () => {
+    if (!isHost() || ph().s !== "write") return;
+    const waiting = entrants().filter((x) => online(x) && !subs(ph().r)[x]).map(nameOf);
+    if (waiting.length && !confirm(`${waiting.join("・")} さんがまだです。締め切りますか？`)) return;
+    closeWrite();
+  }));
+  $("voteClose").addEventListener("click", () => {
+    const p = ph();
+    if (!isHost() || p.s !== "vote") return;
+    advance(p, { s: "reveal", r: p.r, dl: 0 });
+  });
   let advancing = false;
   function advance(from, to) {
     if (advancing) return;
