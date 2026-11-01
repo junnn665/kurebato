@@ -223,6 +223,7 @@
       lastEntry = { lines, score: result.score, odai: odai.id, div: mode === "easy" ? "easy" : "normal", t: entry.t };
       show("soloResult");
       if (window.Banzuke) window.Banzuke.offer(lastEntry);
+      if (window.Zukan) window.Zukan.collect(lines, result.score);
     }, 1700);
   }
   const vClass = (v) => (v === "才能アリ" ? "ari" : v === "凡人" ? "bon" : v === "才能ナシ" ? "nashi" : "none");
@@ -249,6 +250,11 @@
   });
 
   let lastShare = null;
+  const myHaigo = () => ls.get("kure.name", "") || "";
+  $("shikishiBtn").addEventListener("click", () => {
+    if (!lastShare || !window.Shikishi) return;
+    window.Shikishi.open({ lines: lastShare.lines, name: myHaigo(), score: lastShare.score, verdict: lastShare.verdict, odai: lastShare.odai.title });
+  });
   $("shareBtn").addEventListener("click", () => {
     if (!lastShare) return;
     const s = lastShare;
@@ -270,11 +276,16 @@
     $("kuchoList").innerHTML = n ? list.map((k) => {
       const o = odaiById(k.odai);
       const d = new Date(k.t);
-      return `<div class="kitem"><div class="k-text">${k.lines.map(esc).join("　")}</div>
+      return `<div class="kitem"><button class="k-shikishi" data-i="${list.indexOf(k)}" aria-label="色紙にする">🖼</button><div class="k-text">${k.lines.map(esc).join("　")}</div>
         <div class="k-score">${k.score}<small class="v-${vClass(k.verdict)}">${esc(k.verdict)}</small></div>
         <div class="k-meta">お題「${esc(o.title)}」・${d.getMonth() + 1}/${d.getDate()}${k.mode === "mp" ? "・⚔️対戦" + (k.rank ? ` ${k.rank}位` : "") : k.mode === "easy" ? "・🔰はじめて" : ""}</div></div>`;
     }).join("") : `<div class="empty">まだ一句もありません。<br>ひとりで査定 か 対戦で一句詠もう</div>`;
   }
+  $("kuchoList").addEventListener("click", (e) => {
+    const b = e.target.closest(".k-shikishi"); if (!b || !window.Shikishi) return;
+    const k = ls.get("kure.kucho", [])[Number(b.dataset.i)]; if (!k) return;
+    window.Shikishi.open({ lines: k.lines, name: myHaigo(), score: k.score, verdict: k.verdict, odai: odaiById(k.odai).title });
+  });
   function addKucho(entry) { const k = ls.get("kure.kucho", []); k.unshift(entry); ls.set("kure.kucho", k.slice(0, 300)); }
 
   // ---------- 段位 ----------

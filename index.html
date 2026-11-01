@@ -9,12 +9,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="句レバト">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <div id="app">
@@ -53,6 +53,7 @@
       <div class="fuda-row">
         <button class="fuda" id="banzukeBtn"><span>番付</span></button>
         <button class="fuda" id="kuchoBtn"><span>句帳</span></button>
+        <button class="fuda" id="saijikiBtn"><span>歳時記</span></button>
         <button class="fuda" id="dankiBtn"><span>段位</span></button>
         <button class="fuda" id="howtoBtn"><span>心得</span></button>
       </div>
@@ -89,6 +90,10 @@
       <p class="note">よみ（音数）は辞書で自動で出します。読みがちがうときは「よみを直す」で直せます。</p>
       <h3>番付</h3>
       <p><b class="v-ari">才能アリ（70点以上）</b>をとったら、査定結果から番付に名を連ねられます。点の高い順に横綱・大関・関脇・小結・前頭…。「今場所（今月）」と「歴代」、「本場所」と「初心者の部」があります。</p>
+      <h3>歳時記</h3>
+      <p>査定してもらった句に入っていた季語が、木札の「歳時記」に集まっていきます。季節ごとにどれだけ出会えたかがわかり、まだ出会っていない季語もヒントで出ます。</p>
+      <h3>色紙</h3>
+      <p>査定結果・句帳・対戦の結果発表から、句を筆文字の色紙の画像にして保存・シェアできます。</p>
       <h3>段位</h3>
       <p>才能アリを3回とると<b>特待生5級</b>。そこからは毎回が<b>昇格試験</b>。合格ラインをこえると1つ昇格、45点未満だと1つ降格。特待生1級の上は<b>名人初段</b>、目指せ<b>永世名人</b>。</p>
       <h3>みんなで対戦</h3>
@@ -183,6 +188,16 @@
     <p class="msg info" id="bzMsg"></p>
   </section>
 
+  <!-- ===== 歳時記の図鑑 ===== -->
+  <section id="saijiki" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>歳時記</h2></header>
+    <p class="center sj-total" id="sjTotal"></p>
+    <div class="sj-tabs" id="sjTabs"></div>
+    <div id="sjBar"></div>
+    <div class="sj-list" id="sjList"></div>
+    <div class="paper sj-hint-box"><div id="sjHint"></div><button class="link" id="sjMore">ほかの季語を見る</button></div>
+  </section>
+
   <!-- ===== 査定中 ===== -->
   <section id="judging" class="screen hidden">
     <div class="judging">
@@ -201,7 +216,8 @@
       <div class="bz-entry-row"><input id="bzName" maxlength="10" placeholder="俳号（なまえ）" autocomplete="nickname"><button class="btn primary" id="bzSubmit">番付に載せる</button></div>
       <p class="msg info" id="bzEntryMsg"></p>
     </div>
-    <div class="row2">
+    <div class="row3 result-btns">
+      <button class="btn" id="shikishiBtn">🖼 色紙にする</button>
       <button class="btn" id="shareBtn">📤 シェア</button>
       <button class="btn primary" id="againBtn">🖌️ もう一句</button>
     </div>
@@ -295,12 +311,15 @@
 
 <script src="lib/qrcode.min.js?v=1"></script>
 <script src="js/fuzei.js?v=3"></script>
-<script src="js/kigo.js?v=3"></script>
+<script src="js/kigo-alias.js?v=4"></script>
+<script src="js/kigo.js?v=4"></script>
 <script src="js/kotoba.js?v=3"></script>
 <script src="js/odai.js?v=3"></script>
 <script src="js/judge.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
-<script src="js/net.js?v=3"></script>
+<script src="js/app.js?v=4"></script>
+<script src="js/zukan.js?v=4"></script>
+<script src="js/shikishi.js?v=4"></script>
+<script src="js/net.js?v=4"></script>
 <script src="js/banzuke.js?v=3"></script>
 </body>
 </html>

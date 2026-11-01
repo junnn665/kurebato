@@ -89,5 +89,11 @@
     return out.sort((a, b) => a.at - b.at).filter((k) => (seen.has(k.w) ? false : (seen.add(k.w), true)));
   }
 
-  window.KIGO = { find, SUGGEST, count: LIST.length };
+  // 表記ゆれ（kigo-alias.js）をまとめた代表の表記
+  const canon = (w) => (window.KIGO_ALIAS && window.KIGO_ALIAS[w]) || w;
+  function heads(season) {
+    const seen = new Set();
+    return LIST.filter((k) => k.season === season).map((k) => canon(k.w)).filter((w) => (seen.has(w) ? false : (seen.add(w), true)));
+  }
+  window.KIGO = { find, SUGGEST, count: LIST.length, canon, heads, all: () => LIST.slice(), SEASONS: Object.keys(RAW) };
 })();

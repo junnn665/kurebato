@@ -479,15 +479,25 @@
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
       <div class="rbreak">先生 ${x.teacher}点${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>
+      <button class="link r-shikishi" data-id="${x.id}">🖼 色紙にする</button>
       <details><summary>先生の査定をくわしく</summary><ul class="pts">${(s.pts || []).map(([d, t]) => `<li class="${d > 0 ? "good" : "bad"}"><span class="d">${d > 0 ? "+" + d : d}</span><span>${esc(t)}</span></li>`).join("")}</ul>
       <div class="advice"><b>添削ポイント</b><br>${(s.advice || []).map(esc).join("<br>")}</div></details>` : `<div class="rbreak">未提出……</div>`}
     </div>`;
   }
+  $("revealList").addEventListener("click", (e) => {
+    const b = e.target.closest(".r-shikishi"); if (!b || !window.Shikishi || !R) return;
+    const r = ph().r;
+    const x = roundScores(r).find((y) => y.id === b.dataset.id);
+    if (x && x.sub) window.Shikishi.open({ lines: x.sub.lines, name: x.name, score: x.score, verdict: x.verdict, odai: A.odaiById(R.odai[r]).title });
+  });
   function saveToKucho(r, list) {
     if (savedKucho === r) return;
     savedKucho = r;
     const me = list.find((x) => x.id === PID);
-    if (me && me.sub && !me.sub.empty) A.addKucho({ t: Date.now(), lines: me.sub.lines, score: me.score, verdict: me.verdict, odai: R.odai[r], mode: "mp", rank: me.rank });
+    if (me && me.sub && !me.sub.empty) {
+      A.addKucho({ t: Date.now(), lines: me.sub.lines, score: me.score, verdict: me.verdict, odai: R.odai[r], mode: "mp", rank: me.rank });
+      if (window.Zukan) window.Zukan.collect(me.sub.lines, me.score);
+    }
   }
   $("mpNext").addEventListener("click", () => busy($("mpNext"), async () => {
     if (!isHost()) return;
