@@ -435,7 +435,7 @@
       order.forEach((x, i) => {
         const isTop = i === order.length - 1;
         if (isTop && order.length > 1) {
-          revealTimers.push(setTimeout(() => { $("revealList").insertAdjacentHTML("afterbegin", `<div class="drumroll" id="drumroll"><div class="drum">🥁</div>第1位は……</div>`); }, t));
+          revealTimers.push(setTimeout(() => { $("revealList").insertAdjacentHTML("afterbegin", `<div class="drumroll" id="drumroll"><svg class="enso" viewBox="0 0 120 120"><path d="M60 12a48 48 0 1 1-34 14" /></svg>第一位は……</div>`); }, t));
           t += 1800;
         }
         revealTimers.push(setTimeout(() => {
@@ -448,9 +448,9 @@
         const tot = totals(p.r);
         if (cfg().rounds > 1 || last) {
           const top = tot[0];
-          $("revealTotals").innerHTML = `<div class="totals">${last && top ? `<div class="champion"><span class="crown">👑</span>優勝　${esc(top.name)}</div>` : ""}
+          $("revealTotals").innerHTML = `<div class="totals">${last && top ? `<div class="champion"><span class="crown">🏆</span>優勝　${esc(top.name)}</div>` : ""}
             <h3>${last ? "最終結果" : `合計（${p.r + 1}/${cfg().rounds}句）`}</h3>
-            <table>${tot.map((x, i) => `<tr class="${i === 0 ? "win" : ""}"><td>${i + 1}位</td><td>${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</td><td class="n">${x.sum}点</td><td class="n">才能アリ×${x.ari}</td></tr>`).join("")}</table></div>`;
+            <table>${tot.map((x, i) => `<tr class="${i === 0 ? "win" : ""}"><td class="kn">${kansuji(i + 1)}位</td><td>${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</td><td class="n">${x.sum}点</td><td class="n">才能アリ×${x.ari}</td></tr>`).join("")}</table></div>`;
         }
         revealDone = true;
         afterReveal();
@@ -470,11 +470,12 @@
     }
     $("finalBtns").classList.toggle("hidden", !last);
   }
+  const kansuji = (n) => (["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][n] || String(n));
   function rcardHtml(x) {
     const vc = A.vClass(x.verdict);
     const s = x.sub;
     return `<div class="rcard ${vc === "ari" ? "ari" : ""} ${x.rank === 1 ? "first" : ""}">
-      <div class="rhead"><div class="rrank">${x.rank === 1 ? "👑" : ""}${x.rank}<small>位</small></div><div class="rname">${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
+      <div class="rhead"><div class="rrank">${kansuji(x.rank)}<small>位</small></div><div class="rname">${esc(x.name)}${x.id === PID ? "（あなた）" : ""}</div><span class="rv ${vc}">${esc(x.verdict)}</span><div class="rscore">${x.score}</div></div>
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
       <div class="rbreak">先生 ${x.teacher}点${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>

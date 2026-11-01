@@ -13,8 +13,8 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -22,10 +22,17 @@
   <!-- ===== ホーム ===== -->
   <section id="home" class="screen">
     <div class="home-hero">
-      <div class="logo">
-        <span class="logo-sub">才能アリか、才能ナシか。</span>
-        <h1 class="logo-main"><span>句</span><span>レ</span><span>バ</span><span>ト</span></h1>
-        <span class="logo-tag">俳句 査定バトル</span>
+      <div class="kakejiku" aria-label="句レバト">
+        <div class="kj-rod"></div>
+        <div class="kj-cloth">
+          <div class="kj-paper">
+            <span class="kj-sub">才能アリか　才能ナシか</span>
+            <h1 class="kj-title">句レバト</h1>
+            <span class="kj-tag">俳句査定合戦</span>
+            <span class="kj-seal">査<br>定</span>
+          </div>
+        </div>
+        <div class="kj-rod low"></div>
       </div>
       <div id="rankBadge" class="rank-badge"></div>
     </div>
@@ -33,10 +40,10 @@
     <div class="menu">
       <button class="btn big primary" id="soloBtn"><span class="ico">🖌️</span>ひとりで査定<small>お題を見て一句。先生がすぐ査定</small></button>
       <div class="menu-group">
-        <div class="menu-title">みんなで対戦</div>
+        <div class="menu-title">みんなで句合（くあわせ）</div>
         <div class="row2">
-          <button class="btn big vs" id="mpCreateBtn"><span class="ico">⚔️</span>部屋を作る</button>
-          <button class="btn big vs" id="mpJoinBtn"><span class="ico">🔢</span>番号で参加</button>
+          <button class="btn big vs" id="mpCreateBtn"><span class="ico">⚔️</span>部屋を作る<small>番号・QRで仲間を呼ぶ</small></button>
+          <button class="btn big vs" id="mpJoinBtn"><span class="ico">🎴</span>番号で参加<small>四ケタの部屋番号で</small></button>
         </div>
       </div>
       <div class="row3">
@@ -45,7 +52,7 @@
         <button class="btn" id="howtoBtn">❓ あそびかた</button>
       </div>
     </div>
-    <footer class="copy">© 中濱Games</footer>
+    <footer class="copy"><span class="rakkan">中濱</span>© 中濱Games</footer>
   </section>
 
   <!-- ===== あそびかた ===== -->
@@ -130,8 +137,8 @@
   <!-- ===== 査定中 ===== -->
   <section id="judging" class="screen hidden">
     <div class="judging">
-      <div class="drum">🥁</div>
-      <p class="judging-text">査定中<span class="dots"><i>.</i><i>.</i><i>.</i></span></p>
+      <svg class="enso" viewBox="0 0 120 120" aria-hidden="true"><path d="M60 12a48 48 0 1 1-34 14" /></svg>
+      <p class="judging-text">査定中<span class="dots"><i>・</i><i>・</i><i>・</i></span></p>
     </div>
   </section>
 
@@ -237,6 +244,6 @@
 <script src="js/odai.js?v=1"></script>
 <script src="js/judge.js?v=1"></script>
 <script src="js/app.js?v=1"></script>
-<script src="js/net.js?v=1"></script>
+<script src="js/net.js?v=2"></script>
 </body>
 </html>
