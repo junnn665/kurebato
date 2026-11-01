@@ -706,3 +706,111 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .shikishi-modal .note { color: rgba(255,255,255,.75); margin: 0; }
 .shikishi-modal { background: rgba(20,16,13,.9); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .sj-list .empty { grid-column: 1 / -1; }
+
+/* ---- 添削のビフォーアフター ---- */
+.tensaku { border-color: var(--shu); box-shadow: inset 0 0 0 3px var(--paper2), inset 0 0 0 4px rgba(192,57,43,.35), 0 2px 6px rgba(80,60,30,.08); }
+.ts-title { font-family: var(--fude); font-size: 20px; text-align: center; color: var(--shu); }
+.ts-title::after { content: ""; display: block; width: 40%; height: 6px; margin: 2px auto 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'%3E%3Cpath d='M2 5 C40 1 90 7 140 3 S190 4 198 2 L198 4 C170 6 120 8 70 6 S20 7 2 6Z' fill='%23c0392b' opacity='.7'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.ts-lead { text-align: center; font-family: var(--mincho); margin: 8px 0 10px; }
+.ts-lead b { font-family: var(--fude); font-weight: 400; font-size: 22px; color: var(--shu); }
+.ts-none { text-align: center; font-family: var(--mincho); font-size: 14px; color: var(--ink2); line-height: 1.7; }
+.ts-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+.ts-side { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ts-label { font-size: 11px; letter-spacing: .2em; color: var(--ink2); text-transform: uppercase; }
+.ts-tan {
+  writing-mode: vertical-rl; height: 190px; width: 86px; padding: 10px 6px; font-family: var(--fude); font-size: 18px; line-height: 1.5;
+  background: linear-gradient(#e4d7f0 0 9%, #fffdf6 9% 91%, #d9e6d3 91%); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 3px 3px 0 rgba(60,40,20,.12); border-radius: 2px;
+}
+.ts-tan span { display: block; }
+.ts-tan span:nth-child(2) { padding-top: .8em; } .ts-tan span:nth-child(3) { padding-top: 1.6em; }
+.ts-tan.before span.hi { color: var(--nezumi); text-decoration: line-through; text-decoration-color: rgba(192,57,43,.8); text-decoration-thickness: 2px; }
+.ts-tan.after span.hi { color: var(--shu); }
+.ts-tan.after { animation: pop .6s .2s both; }
+.ts-score { font-family: var(--mincho); font-weight: 800; font-size: 24px; position: relative; }
+.ts-score small { font-size: 12px; }
+.ts-score.up { color: var(--shu); }
+.ts-score em { position: absolute; right: -30px; top: -6px; font-style: normal; font-size: 12px; background: var(--shu); color: #fff; border-radius: 2px; padding: 0 4px; }
+.ts-arrow { font-family: var(--fude); font-size: 26px; color: var(--shu); display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.ts-arrow span { font-size: 12px; writing-mode: vertical-rl; letter-spacing: .2em; margin-bottom: 4px; }
+.ts-change { text-align: center; font-family: var(--fude); font-size: 18px; margin: 10px 0 4px; }
+.ts-change s { color: var(--nezumi); text-decoration-color: var(--shu); }
+.ts-change b { font-weight: 400; color: var(--shu); }
+.ts-why { font-family: var(--mincho); font-size: 14px; text-align: center; margin: 4px 0 6px; }
+.ts-diff { list-style: none; padding: 0; margin: 6px 0; font-family: var(--mincho); font-size: 13px; line-height: 1.6; }
+.ts-diff li { padding: 4px 8px; border-radius: 3px; margin-bottom: 4px; }
+.ts-diff li.gone { background: #eef3ea; color: var(--ok); }
+.ts-diff li.gone::before { content: "✓ "; }
+.ts-diff li.gain { background: #fff3e8; color: var(--shu-d); }
+.ts-diff li.gain::before { content: "＋ "; }
+.ts-btns { display: grid; gap: 8px; margin-top: 8px; }
+.ts-btns .btn { font-size: 14px; padding: 10px; }
+
+/* ---- 巻物のボタン（名句の穴埋め） ---- */
+.makimono { display: flex; align-items: stretch; width: 100%; margin-top: 16px; border: 0; padding: 0; background: none; filter: drop-shadow(0 4px 5px rgba(40,25,10,.2)); }
+.makimono:active { transform: translateY(2px); }
+.mk-rod { width: 14px; border-radius: 7px; background: linear-gradient(90deg, #4b321a, #8a6238 45%, #3a2416); position: relative; }
+.mk-rod::before, .mk-rod::after { content: ""; position: absolute; left: 2px; width: 10px; height: 8px; border-radius: 3px; background: #c9a457; }
+.mk-rod::before { top: -5px; } .mk-rod::after { bottom: -5px; }
+.mk-paper { flex: 1; margin: 6px -2px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(90deg, rgba(0,0,0,.06), transparent 6%, transparent 94%, rgba(0,0,0,.06)), #fbf3e0;
+  border-top: 3px solid #b84a2c; border-bottom: 3px solid #b84a2c; }
+.mk-paper b { font-family: var(--fude); font-weight: 400; font-size: 21px; letter-spacing: .1em; }
+.mk-paper small { font-family: var(--mincho); font-size: 12px; color: var(--ink2); }
+
+/* ---- 名句の穴埋め ---- */
+.mk-progress { text-align: center; font-family: var(--mincho); margin: 0 0 8px; }
+.mk-right { color: var(--shu); font-weight: 800; margin-left: 6px; }
+.mk-stage { display: flex; justify-content: center; margin-bottom: 8px; }
+.mk-tan {
+  writing-mode: vertical-rl; height: 260px; min-width: 110px; padding: 16px 12px; font-family: var(--fude); font-size: 26px; line-height: 1.5;
+  background: linear-gradient(#e4d7f0 0 9%, #fffdf6 9% 91%, #d9e6d3 91%); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 5px 5px 0 rgba(60,40,20,.12); border-radius: 2px;
+}
+.mk-tan span { display: block; }
+.mk-tan span:nth-child(2) { padding-top: .8em; } .mk-tan span:nth-child(3) { padding-top: 1.6em; }
+.mk-tan .blank { color: rgba(192,57,43,.35); letter-spacing: -.1em; }
+.mk-tan .filled { color: var(--shu); animation: pop .5s; }
+.mk-tan .mk-final { font-size: 64px; color: var(--shu); text-combine-upright: all; }
+.mk-ask { text-align: center; font-family: var(--mincho); margin: 6px 0 10px; }
+.mk-ask b { font-family: var(--fude); font-weight: 400; font-size: 20px; color: var(--shu); }
+.mk-opt.correct { background: var(--ok); color: #fff; border-color: #2c5236; box-shadow: 0 2px 0 #2c5236; }
+.mk-opt.wrong { background: #e9e4dc; color: var(--nezumi); text-decoration: line-through; }
+.mk-opt:disabled { opacity: 1; }
+.mk-info { text-align: center; margin-top: 12px; }
+.mk-verdict { font-family: var(--fude); font-size: 30px; }
+.mk-verdict.ok { color: var(--shu); } .mk-verdict.ng { color: var(--nezumi); }
+.mk-who { font-family: var(--fude); font-size: 20px; margin-top: 2px; }
+.mk-kigo { font-family: var(--mincho); font-size: 14px; margin-top: 4px; }
+.mk-kigo span { margin-left: 6px; font-size: 11px; color: #fff; background: var(--sashi, var(--shu)); padding: 1px 6px; border-radius: 2px; }
+.mk-note { font-family: var(--mincho); font-size: 14px; line-height: 1.7; margin: 8px 0 0; }
+
+/* ---- 推敲ノート ---- */
+.suikou-row { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 10px; }
+.suikou-row .btn { font-size: 15px; }
+.sk-sum { font-family: var(--mincho); margin: 4px 0 6px; }
+.sk-sum b { font-family: var(--fude); font-weight: 400; font-size: 22px; }
+.sk-sum .up { margin-left: 6px; font-size: 13px; font-weight: 800; color: #fff; background: var(--shu); border-radius: 2px; padding: 1px 6px; }
+.sk-graph { width: 100%; height: auto; display: block; }
+.sk-graph .gl { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.sk-graph .g70 { stroke: var(--shu); stroke-width: 1; stroke-dasharray: 4 4; opacity: .6; }
+.sk-graph .g70t { font-size: 9px; fill: var(--shu); text-anchor: end; }
+.sk-graph .gp { stroke: #fff; stroke-width: 2; fill: var(--nezumi); }
+.sk-graph .gp.ari { fill: var(--shu); } .sk-graph .gp.bon { fill: var(--ai); }
+.sk-graph .gv { font-size: 11px; font-weight: 700; text-anchor: middle; fill: var(--ink); }
+.sk-graph .gx { font-size: 9px; text-anchor: middle; fill: var(--ink2); }
+.sk-list { display: grid; gap: 8px; }
+.sk-ver { background: var(--paper2); border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; box-shadow: inset 0 0 0 3px var(--paper2), inset 0 0 0 4px rgba(203,182,142,.6); }
+.sk-ver.ari { border-color: var(--shu); }
+.sk-head { display: flex; align-items: center; gap: 8px; }
+.sk-no { font-family: var(--fude); font-size: 18px; flex: 1; }
+.sk-score { font-family: var(--mincho); font-weight: 800; font-size: 20px; }
+.sk-score small { font-size: 11px; }
+.sk-score em { font-style: normal; font-size: 12px; margin-left: 4px; color: var(--ink2); }
+.sk-score em.up { color: var(--shu); } .sk-score em.down { color: var(--ai); }
+.sk-text { font-family: var(--fude); font-size: 19px; margin-top: 6px; }
+.sk-text span { margin-right: .5em; }
+.sk-text .changed { color: var(--shu); border-bottom: 2px solid rgba(192,57,43,.35); }
+.sk-diff { font-family: var(--mincho); font-size: 12px; color: var(--ink2); margin-top: 4px; }
+.sk-diff s { text-decoration-color: var(--shu); }
+.sk-diff b { color: var(--shu); font-weight: 700; }
+.k-suikou { grid-column: 1 / -1; justify-self: start; border: 1px solid var(--shu); color: var(--shu); background: #fff; border-radius: 2px; font-size: 12px; padding: 2px 8px; font-family: var(--mincho); }
+.mk-tan .mk-final { padding-top: .2em !important; }

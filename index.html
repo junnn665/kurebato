@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <div id="app">
@@ -43,6 +43,7 @@
         <button class="noren ai" id="soloBtn"><span class="noren-rod"></span><span class="noren-cloth"><span class="mon">詠</span><span class="noren-label">一句詠む</span><small>自分で書いて査定</small></span></button>
         <button class="noren cha" id="easyBtn"><span class="noren-rod"></span><span class="noren-cloth"><span class="mon">初</span><span class="noren-label">はじめての一句</span><small>言葉の札をえらぶだけ</small></span></button>
       </div>
+      <button class="makimono" id="meikuBtn"><span class="mk-rod"></span><span class="mk-paper"><b>名句の穴埋め</b><small>芭蕉・蕪村・一茶に挑む稽古</small></span><span class="mk-rod"></span></button>
       <div class="menu-group">
         <div class="menu-title">みんなで句合（くあわせ）</div>
         <div class="row2">
@@ -90,6 +91,12 @@
       <p class="note">よみ（音数）は辞書で自動で出します。読みがちがうときは「よみを直す」で直せます。</p>
       <h3>番付</h3>
       <p><b class="v-ari">才能アリ（70点以上）</b>をとったら、査定結果から番付に名を連ねられます。点の高い順に横綱・大関・関脇・小結・前頭…。「今場所（今月）」と「歴代」、「本場所」と「初心者の部」があります。</p>
+      <h3>添削のビフォーアフター</h3>
+      <p>査定結果に、先生が一か所だけ差しかえた例と「62点→74点」のような点の変化が出ます。どこを直すと点が動くかの手がかりにしてください。「この案で書きなおす」で編集もできます（添削案そのままの句は、段位・番付には数えません）。</p>
+      <h3>名句の穴埋め</h3>
+      <p>芭蕉・蕪村・一茶・子規などの名句の、上五・中七・下五のどこか一つを4択で当てます。10問で一局。正解すると作者・季語・句のひとことが出ます。</p>
+      <h3>推敲ノート</h3>
+      <p>査定結果の「推敲する」で、同じ句を書きなおせます。直すたびに版（初稿・二稿…）が重なり、句と点数の移り変わりを見比べられます。句帳からも開けます。</p>
       <h3>歳時記</h3>
       <p>査定してもらった句に入っていた季語が、木札の「歳時記」に集まっていきます。季節ごとにどれだけ出会えたかがわかり、まだ出会っていない季語もヒントで出ます。</p>
       <h3>色紙</h3>
@@ -173,6 +180,23 @@
     <p class="note center">札には「罠」もまじっています。先生にしかられて覚えよう</p>
   </section>
 
+  <!-- ===== 名句の穴埋め ===== -->
+  <section id="meiku" class="screen hidden">
+    <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>名句の穴埋め</h2></header>
+    <p class="mk-progress" id="mkProgress"></p>
+    <div class="mk-stage"><div class="mk-tan" id="mkTan"></div></div>
+    <p class="mk-ask" id="mkAsk"></p>
+    <div class="chips" id="mkOpts"></div>
+    <div class="paper mk-info hidden" id="mkInfo"></div>
+    <button class="btn big primary hidden" id="mkNext">つぎの句へ</button>
+  </section>
+
+  <!-- ===== 推敲ノート ===== -->
+  <section id="suikou" class="screen hidden">
+    <header class="bar"><button class="back" id="suikouBack">‹ もどる</button><h2>推敲ノート</h2></header>
+    <div id="suikouBody"></div>
+  </section>
+
   <!-- ===== 番付 ===== -->
   <section id="banzuke" class="screen hidden">
     <header class="bar"><button class="back" data-go="home">‹ もどる</button><h2>番付</h2></header>
@@ -210,12 +234,14 @@
   <section id="soloResult" class="screen hidden">
     <header class="bar"><button class="back" data-go="home">‹ ホーム</button><h2>査定結果</h2></header>
     <div id="soloResultBody"></div>
+    <div id="tensaku" class="paper tensaku hidden"></div>
     <div id="rankChange"></div>
     <div id="bzEntry" class="paper bz-entry hidden">
       <div class="bz-entry-title">才能アリ！ 番付に名を連ねますか？</div>
       <div class="bz-entry-row"><input id="bzName" maxlength="10" placeholder="俳号（なまえ）" autocomplete="nickname"><button class="btn primary" id="bzSubmit">番付に載せる</button></div>
       <p class="msg info" id="bzEntryMsg"></p>
     </div>
+    <div class="suikou-row"><button class="btn" id="suikouBtn">✍️ 推敲する（この句を書きなおす）</button><button class="link hidden" id="suikouNoteBtn">推敲ノートを見る</button></div>
     <div class="row3 result-btns">
       <button class="btn" id="shikishiBtn">🖼 色紙にする</button>
       <button class="btn" id="shareBtn">📤 シェア</button>
@@ -316,9 +342,11 @@
 <script src="js/kotoba.js?v=3"></script>
 <script src="js/odai.js?v=3"></script>
 <script src="js/judge.js?v=3"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/app.js?v=5"></script>
 <script src="js/zukan.js?v=4"></script>
-<script src="js/shikishi.js?v=4"></script>
+<script src="js/shikishi.js?v=5"></script>
+<script src="js/tensaku.js?v=5"></script>
+<script src="js/meiku.js?v=5"></script>
 <script src="js/net.js?v=4"></script>
 <script src="js/banzuke.js?v=3"></script>
 </body>

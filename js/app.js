@@ -203,6 +203,9 @@
 
   // ---------- ひとり：査定 ----------
   let lastMode = "solo";
+  let tensakuLines = [];
+  let pendingChain = null; // 推敲中の句のつながり（初稿の時刻）
+  const chainOf = (k) => k.chain || k.t; // 添削案（そのまま出した句は段位・番付に数えない）
   let lastEntry = null;
   function soloSubmit(result, lines, mode, odai) {
     mode = mode === "easy" ? "easy" : "solo";
@@ -210,19 +213,35 @@
     lastMode = mode;
     show("judging");
     setTimeout(() => {
-      const entry = { t: Date.now(), lines, score: result.score, verdict: result.verdict, odai: odai.id, mode };
+      const now = Date.now();
+      const entry = { t: now, lines, score: result.score, verdict: result.verdict, odai: odai.id, mode, chain: pendingChain || now };
+      pendingChain = null;
       addKucho(entry);
       renderResult($("soloResultBody"), result, { name: "", odai });
-      if (mode === "easy") {
+      const fromTensaku = tensakuLines.some((t) => t.join("|") === lines.join("|"));
+      if (fromTensaku) {
+        $("rankChange").innerHTML = `<div class="rank-change">✍️ 先生の添削案そのままの句です<span class="big">段位・番付には数えません</span></div>`;
+      } else if (mode === "easy") {
         $("rankChange").innerHTML = `<div class="rank-change">🔰 はじめての一句（段位には影響しません）<span class="big">${result.score >= 70 ? "見事！ 次は「一句詠む」で自分の言葉を" : "札を入れかえて、もう一句"}</span></div>`;
       } else {
         const rc = applyRank(result.score);
         $("rankChange").innerHTML = `<div class="rank-change ${rc.kind === "up" ? "up" : rc.kind === "down" ? "down" : ""}">${esc(rc.text)}<span class="big">${rc.kind === "up" || rc.kind === "down" ? `${esc(rc.before)} → ${esc(rc.after)}` : esc(rc.after)}</span></div>`;
       }
       lastShare = { lines, score: result.score, verdict: result.verdict, odai };
-      lastEntry = { lines, score: result.score, odai: odai.id, div: mode === "easy" ? "easy" : "normal", t: entry.t };
+      lastEntry = { lines, score: result.score, odai: odai.id, div: mode === "easy" ? "easy" : "normal", t: entry.t, chain: entry.chain };
+      const versions = ls.get("kure.kucho", []).filter((k) => chainOf(k) === entry.chain).length;
+      $("suikouNoteBtn").classList.toggle("hidden", versions < 2);
+      $("suikouNoteBtn").textContent = `推敲ノートを見る（${versions}稿）`;
       show("soloResult");
-      if (window.Banzuke) window.Banzuke.offer(lastEntry);
+      if (window.Banzuke) window.Banzuke.offer(fromTensaku ? null : lastEntry);
+      if (window.Tensaku) {
+        window.Tensaku.show($("tensaku"), result, odai, (newLines) => {
+          tensakuLines.push(newLines);
+          pendingChain = entry.chain;
+          L.forEach((x, i) => { x.value = newLines[i] || ""; YE[i].value = ""; });
+          openWrite({ odai, mode: "solo", keep: true, title: "添削案から書きなおす", onSubmit: soloSubmit, onBack: () => { pendingChain = null; show("soloResult"); } });
+        });
+      }
       if (window.Zukan) window.Zukan.collect(lines, result.score);
     }, 1700);
   }
@@ -250,6 +269,49 @@
   });
 
   let lastShare = null;
+  // ---------- 推敲ノート ----------
+  $("suikouBtn").addEventListener("click", () => {
+    if (!lastShare || !lastEntry) return;
+    pendingChain = lastEntry.chain;
+    L.forEach((x, i) => { x.value = lastShare.lines[i] || ""; YE[i].value = ""; });
+    openWrite({ odai: lastShare.odai, mode: "solo", keep: true, title: "推敲", onSubmit: soloSubmit, onBack: () => { pendingChain = null; show("soloResult"); } });
+  });
+  let suikouFrom = "soloResult";
+  $("suikouNoteBtn").addEventListener("click", () => { if (lastEntry) openSuikou(lastEntry.chain, "soloResult"); });
+  $("suikouBack").addEventListener("click", () => { if (suikouFrom === "kucho") renderKucho(); show(suikouFrom); });
+  const KAN = (n) => (window.Fuzei ? window.Fuzei.kan(n) : String(n));
+  function openSuikou(chain, from) {
+    suikouFrom = from || "kucho";
+    const vs = ls.get("kure.kucho", []).filter((k) => chainOf(k) === chain).sort((a, b) => a.t - b.t);
+    if (!vs.length) return;
+    const o = odaiById(vs[0].odai);
+    // 点数の移り変わり（折れ線）
+    const Wd = 320, Hd = 120, pad = 22;
+    const xs = (i) => (vs.length === 1 ? Wd / 2 : pad + (i * (Wd - pad * 2)) / (vs.length - 1));
+    const lo = Math.max(0, Math.min(60, ...vs.map((k) => k.score)) - 10);
+    const ys = (v) => Hd - pad - ((v - lo) * (Hd - pad * 2)) / (100 - lo);
+    const pts = vs.map((k, i) => `${xs(i)},${ys(k.score)}`).join(" ");
+    const graph = `<svg class="sk-graph" viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="点数の移り変わり">
+      <line x1="${pad}" x2="${Wd - pad}" y1="${ys(70)}" y2="${ys(70)}" class="g70"/><text x="${Wd - pad}" y="${ys(70) - 4}" class="g70t">才能アリ 70</text>
+      <polyline points="${pts}" class="gl"/>
+      ${vs.map((k, i) => `<circle cx="${xs(i)}" cy="${ys(k.score)}" r="5" class="gp ${vClass(k.verdict)}"/><text x="${xs(i)}" y="${ys(k.score) - 10}" class="gv">${k.score}</text><text x="${xs(i)}" y="${Hd - 4}" class="gx">${i === 0 ? "初稿" : KAN(i + 1) + "稿"}</text>`).join("")}
+    </svg>`;
+    const first = vs[0].score, last = vs[vs.length - 1].score;
+    $("suikouBody").innerHTML = `
+      <div class="paper center"><div class="note">お題「${esc(o.title)}」</div>
+        <div class="sk-sum">${vs.length}稿　<b>${first}点 → ${last}点</b>${last > first ? `<span class="up">+${last - first}</span>` : ""}</div>
+        ${graph}</div>
+      <div class="sk-list">${vs.map((k, i) => {
+        const prev = vs[i - 1];
+        const d = prev ? k.score - prev.score : 0;
+        return `<div class="sk-ver ${vClass(k.verdict)}">
+          <div class="sk-head"><span class="sk-no">${i === 0 ? "初稿" : KAN(i + 1) + "稿"}</span><span class="rv ${vClass(k.verdict)}">${esc(k.verdict)}</span><span class="sk-score">${k.score}<small>点</small>${prev ? `<em class="${d > 0 ? "up" : d < 0 ? "down" : ""}">${d > 0 ? "+" : ""}${d}</em>` : ""}</span></div>
+          <div class="sk-text">${k.lines.map((l, j) => `<span class="${prev && prev.lines[j] !== l ? "changed" : ""}">${esc(l)}</span>`).join("")}</div>
+          ${prev ? `<div class="sk-diff">${k.lines.map((l, j) => (prev.lines[j] !== l ? `「<s>${esc(prev.lines[j])}</s>」→「<b>${esc(l)}</b>」` : "")).filter(Boolean).join("　")}</div>` : ""}
+        </div>`;
+      }).join("")}</div>`;
+    show("suikou");
+  }
   const myHaigo = () => ls.get("kure.name", "") || "";
   $("shikishiBtn").addEventListener("click", () => {
     if (!lastShare || !window.Shikishi) return;
@@ -273,15 +335,23 @@
     const avg = n ? Math.round(list.reduce((a, k) => a + k.score, 0) / n) : 0;
     const ari = list.filter((k) => k.verdict === "才能アリ").length;
     $("kuchoStats").innerHTML = `<div><b>${n}</b>句</div><div><b>${best}</b>最高点</div><div><b>${avg}</b>平均</div><div><b>${ari}</b>才能アリ</div>`;
+    const chainCount = {};
+    list.forEach((k) => { chainCount[chainOf(k)] = (chainCount[chainOf(k)] || 0) + 1; });
+    const shownChain = new Set();
     $("kuchoList").innerHTML = n ? list.map((k) => {
       const o = odaiById(k.odai);
+      const c = chainOf(k);
+      const isLatest = !shownChain.has(c); shownChain.add(c);
+      const sk = chainCount[c] > 1 && isLatest ? `<button class="k-suikou" data-chain="${c}">✍️ 推敲 ${chainCount[c]}稿</button>` : "";
       const d = new Date(k.t);
       return `<div class="kitem"><button class="k-shikishi" data-i="${list.indexOf(k)}" aria-label="色紙にする">🖼</button><div class="k-text">${k.lines.map(esc).join("　")}</div>
         <div class="k-score">${k.score}<small class="v-${vClass(k.verdict)}">${esc(k.verdict)}</small></div>
-        <div class="k-meta">お題「${esc(o.title)}」・${d.getMonth() + 1}/${d.getDate()}${k.mode === "mp" ? "・⚔️対戦" + (k.rank ? ` ${k.rank}位` : "") : k.mode === "easy" ? "・🔰はじめて" : ""}</div></div>`;
+        ${sk}<div class="k-meta">お題「${esc(o.title)}」・${d.getMonth() + 1}/${d.getDate()}${k.mode === "mp" ? "・⚔️対戦" + (k.rank ? ` ${k.rank}位` : "") : k.mode === "easy" ? "・🔰はじめて" : ""}</div></div>`;
     }).join("") : `<div class="empty">まだ一句もありません。<br>ひとりで査定 か 対戦で一句詠もう</div>`;
   }
   $("kuchoList").addEventListener("click", (e) => {
+    const sb = e.target.closest(".k-suikou");
+    if (sb) { openSuikou(Number(sb.dataset.chain), "kucho"); return; }
     const b = e.target.closest(".k-shikishi"); if (!b || !window.Shikishi) return;
     const k = ls.get("kure.kucho", [])[Number(b.dataset.i)]; if (!k) return;
     window.Shikishi.open({ lines: k.lines, name: myHaigo(), score: k.score, verdict: k.verdict, odai: odaiById(k.odai).title });
