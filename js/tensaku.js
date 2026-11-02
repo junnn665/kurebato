@@ -58,31 +58,39 @@
     lines.forEach((l, i) => {
       const m = result.moras[i];
       // 1. 字余り → 助詞を一つ削る
-      if (m > TARGET[i] && !result.reads[i].guess) {
-        [...l].forEach((c, k) => {
-          if (!PARTICLES.includes(c) || k === 0) return;
+      // 辞書で「助詞」とわかった一文字だけを削る（「ずっと」の「と」のような言葉の一部は削らない）
+      const toks = J.tokenize(l);
+      if (m > TARGET[i] && !result.reads[i].guess && toks) {
+        let pos = 0;
+        toks.forEach((t, ti) => {
+          const at = pos; pos += t.surface_form.length;
+          const c = t.surface_form;
+          if (t.pos !== "助詞" || !PARTICLES.includes(c) || ti === 0) return;
           // 行のまん中の「の」「て」を削ると日本語がくずれやすいので、行末か、ほかの助詞だけ
-          if (k < l.length - 1 && (c === "の" || c === "て")) return;
-          const to = l.slice(0, k) + l.slice(k + 1);
-          const y = result.reads[i].yomi;
-          const yi = y.lastIndexOf(c === "は" ? "は" : c);
-          push(i, to, yi >= 0 ? y.slice(0, yi) + y.slice(yi + 1) : null, `助詞「${c}」を一つ削って${TARGET[i]}音に`, true);
+          if (ti < toks.length - 1 && (c === "の" || c === "て")) return;
+          const to = l.slice(0, at) + l.slice(at + 1);
+          push(i, to, null, `助詞「${c}」を一つ削って${TARGET[i]}音に`, true);
         });
       }
       // 字余り・字足らず → 同じ音数の言葉に
-      if (m !== TARGET[i]) sample(pool(i, totalKigo ? "nokigo" : "kigo", season), 6, seed + i).forEach((x) => push(i, x.w, x.y, `${TARGET[i]}音の言葉に差しかえて、リズムを整える`));
+      if (m !== TARGET[i]) sample(pool(i, totalKigo ? "nokigo" : "kigo", season), 14, seed + i).forEach((x) => push(i, x.w, x.y, `${TARGET[i]}音の言葉に差しかえて、リズムを整える`));
       // 2. 気持ち・説明・ありがち → モノの言葉に
-      if (EMO_RE.test(l)) sample(pool(i, kigoLines[i] ? "kigo" : totalKigo ? "nokigo" : "kigo", season), 8, seed + 10 + i).forEach((x) => push(i, x.w, x.y, `気持ちや説明を言わずに、“${x.w}”というモノに語らせる`));
+      if (EMO_RE.test(l)) sample(pool(i, kigoLines[i] ? "kigo" : totalKigo ? "nokigo" : "kigo", season), 16, seed + 10 + i).forEach((x) => push(i, x.w, x.y, `気持ちや説明を言わずに、“${x.w}”というモノに語らせる`));
       // 3. 季重なり → 季語のない言葉に（季語が入った行のうち、主役でないほう）
-      if (totalKigo >= 2 && kigoLines[i]) sample(pool(i, "nokigo", season), 6, seed + 20 + i).forEach((x) => push(i, x.w, x.y, `季語を一つに絞る（「${KG.find(l)[0].w}」を外す）`));
+      if (totalKigo >= 2 && kigoLines[i]) sample(pool(i, "nokigo", season), 14, seed + 20 + i).forEach((x) => push(i, x.w, x.y, `季語を一つに絞る（「${KG.find(l)[0].w}」を外す）`));
     });
     // 4. 季語なし → 上五か下五を季語に
     if (totalKigo === 0) {
-      sample(pool(0, "kigo", season), 8, seed + 30).forEach((x) => push(0, x.w, x.y, `季語「${KG.find(x.w)[0] ? KG.find(x.w)[0].w : x.w}」を入れて季節を立てる`));
-      sample(pool(2, "kigo", season), 4, seed + 31).forEach((x) => push(2, x.w, x.y, `下五に季語を置いて季節を立てる`));
+      sample(pool(0, "kigo", season), 16, seed + 30).forEach((x) => push(0, x.w, x.y, `季語「${KG.find(x.w)[0] ? KG.find(x.w)[0].w : x.w}」を入れて季節を立てる`));
+      sample(pool(2, "kigo", season), 8, seed + 31).forEach((x) => push(2, x.w, x.y, `下五に季語を置いて季節を立てる`));
     }
-    // 5. まだ案が少なければ、下五を名詞止めに
-    if (cands.length < 6) sample(K.shimo.ふつう.filter((x) => !KG.find(x.w).length), 8, seed + 40).forEach((x) => push(2, x.w, x.y, `下五を手に取れる“モノ”で止める`));
+    // 5. 下五を手に取れるモノで止める／中七を具体的な場面に（どの句にも試す）
+    sample(K.shimo.ふつう.filter((x) => !KG.find(x.w).length), 14, seed + 40).forEach((x) => push(2, x.w, x.y, `下五を手に取れる“${x.w}”で止める`));
+    if (!EMO_RE.test(lines[1]) && result.moras[1] === 7) sample(K.naka.ふつう, 12, seed + 50).forEach((x) => push(1, x.w, x.y, `中七を具体的な場面「${x.w}」に`));
+    // 6. 季語はあるが切れがない → 上五を「〜や」の季語に
+    if (totalKigo === 1 && !/(や|かな|けり)$/.test(lines[0]) && !/(かな|けり)$/.test(lines[2])) {
+      sample((K.kami[season] || []).filter((x) => /や$/.test(x.w)), 8, seed + 60).forEach((x) => push(0, x.w, x.y, `上五を切れ字「や」で切って、句に間をつくる`));
+    }
 
     const seen = new Set();
     const out = [];
@@ -105,20 +113,25 @@
     }
     // いちばん小さな直し（助詞を削るだけ）は少し優先する
     out.sort((a, b) => (b.real + (b.minimal ? 4 : 0)) - (a.real + (a.minimal ? 4 : 0)) || b.delta - a.delta);
-    // 同じ行の案ばかりにならないよう、行ごとにいちばんいいものを優先して3つ
+    // 同じ行・同じ理由の案ばかりにならないよう、行ごと→理由ごとに散らして最大6案
+    const MAX = 6;
     const pick = [];
+    const kind = (c) => c.why.replace(/“[^”]*”|「[^」]*」/g, "");
     for (const c of out) if (!pick.some((p) => p.i === c.i)) pick.push(c);
-    for (const c of out) if (pick.length < 3 && !pick.includes(c)) pick.push(c);
-    return pick.slice(0, 3);
+    for (const c of out) if (pick.length < MAX && !pick.includes(c) && !pick.some((p) => p.i === c.i && kind(p) === kind(c))) pick.push(c);
+    for (const c of out) if (pick.length < MAX && !pick.includes(c)) pick.push(c);
+    return pick.slice(0, MAX);
   }
 
   // ---------- 画面 ----------
-  let list = [], idx = 0, base = null, applyCb = null;
+  // 状態は表示する要素ごとに持つ（対戦の結果発表では、いくつもの句で同時に開ける）
   function render(el) {
+    const st = el._ts;
+    const { list, idx, base, applyCb } = st;
     if (!list.length) {
       el.innerHTML = base && base.score >= 70
         ? `<div class="ts-title">添削のビフォーアフター</div><p class="ts-none">${base.score >= 85 ? "一語も直すところが見当たりません。お見事。" : "一か所の差しかえで良くなる所は見つかりませんでした。基本はできています。次は自分の言葉で、もう一段上を。"}</p>`
-        : `<div class="ts-title">添削のビフォーアフター</div><p class="ts-none">一か所の差しかえでは点が上がりませんでした。下の添削ポイントを手がかりに、自分の言葉で直してみましょう。</p>`;
+        : `<div class="ts-title">添削のビフォーアフター</div><p class="ts-none">一か所の差しかえでは点が上がりませんでした。添削ポイントを手がかりに、自分の言葉で直してみましょう。</p>`;
       return;
     }
     const c = list[idx];
@@ -135,23 +148,26 @@
       <div class="ts-change">「<s>${esc(c.from)}</s>」→「<b>${esc(c.to)}</b>」</div>
       <p class="ts-why">🖌️ ${esc(c.why)}</p>
       <ul class="ts-diff">${c.gone.map((t) => `<li class="gone">消えた減点：${esc(t)}</li>`).join("")}${c.gain.map((t) => `<li class="gain">ついた加点：${esc(t)}</li>`).join("")}</ul>
+      ${list.length > 1 ? `<div class="ts-dots">${list.map((x, i) => `<button class="ts-dot${i === idx ? " on" : ""}" data-a="go" data-i="${i}" aria-label="添削案${i + 1}"><b>${NAMES[x.i].slice(0, 1)}</b>+${x.delta}</button>`).join("")}</div>` : ""}
       <div class="ts-btns">${list.length > 1 ? `<button class="btn" data-a="next">ほかの添削案（${idx + 1}/${list.length}）</button>` : ""}${applyCb ? `<button class="btn" data-a="apply">この案で書きなおす</button>` : ""}</div>
       <p class="note">※ 言葉の札から機械的に選んだ例です。意味が変わることもあるので、「どこを直すと点が動くか」の手がかりにしてください。</p>`;
   }
   function show(el, result, odai, onApply) {
-    base = result; idx = 0; applyCb = onApply || null;
+    el._ts = { list: [], idx: 0, base: result, applyCb: onApply || null };
     el.classList.remove("hidden");
     el.innerHTML = `<div class="ts-title">添削のビフォーアフター</div><p class="ts-none">先生が朱を入れています…</p>`;
     setTimeout(() => {
-      try { list = suggest(result, odai); } catch (e) { console.warn(e); list = []; }
+      try { el._ts.list = suggest(result, odai); } catch (e) { console.warn(e); el._ts.list = []; }
       render(el);
     }, 60);
     if (!el.dataset.bound) {
       el.dataset.bound = "1";
       el.addEventListener("click", (e) => {
-        const b = e.target.closest("[data-a]"); if (!b) return;
-        if (b.dataset.a === "next") { idx = (idx + 1) % list.length; render(el); }
-        if (b.dataset.a === "apply" && applyCb && list[idx]) applyCb(list[idx].lines);
+        const b = e.target.closest("[data-a]"); if (!b || !el._ts) return;
+        const st = el._ts;
+        if (b.dataset.a === "next") { st.idx = (st.idx + 1) % st.list.length; render(el); }
+        if (b.dataset.a === "go") { st.idx = Number(b.dataset.i); render(el); }
+        if (b.dataset.a === "apply" && st.applyCb && st.list[st.idx]) st.applyCb(st.list[st.idx].lines);
       });
     }
   }

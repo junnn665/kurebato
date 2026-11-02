@@ -348,6 +348,7 @@
       easy: !!easy,
       lines, score: res.score, verdict: res.verdict, summary: res.summary, kata: res.kata, hyogen: res.hyogen,
       parts: (res.parts || []).map((p) => [p.name, p.got, p.max, p.group]),
+      yomi: (res.reads || []).map((r) => (r.manual ? r.yomi : null)),
       advice: res.advice, pts: res.pts.filter((p) => p.d !== 0).map((p) => [p.d, p.t]).slice(0, 8),
       moras: res.moras, empty: lines.every((l) => !l), t: NET.now(),
     };
@@ -501,6 +502,9 @@
         revealDone = true;
         revealDoneAt = Date.now();
         afterReveal();
+        // 自分の句の添削は、発表がおわったら最初から開いておく
+        const mine = subs(p.r)[PID];
+        if (mine && !mine.empty) openTensaku(PID);
       }, t + 200));
     } else if (revealDone) afterReveal();
   }
@@ -530,12 +534,30 @@
       ${s && !s.empty ? `<div class="rtext">${s.lines.map((l) => `<span>${esc(l)}</span>`).join("")}</div>
       <div class="rbreak">先生 ${x.teacher}点${s.kata != null ? `（型${s.kata}・表現${s.hyogen}）` : ""}${cfg().vote ? `　みんな ${x.crowd == null ? "—" : x.crowd + "点"}（${x.n}人）` : ""}</div>
       <div class="rcomment">🖌️ 先生（${x.teacher}点）：${esc(s.summary)}</div>
-      <button class="link r-shikishi" data-id="${x.id}">🖼 色紙にする</button>
+      <div class="r-tools"><button class="link r-ts-btn" data-id="${x.id}">✍️ 添削ビフォーアフター</button><button class="link r-shikishi" data-id="${x.id}">🖼 色紙にする</button></div>
+      <div class="r-tensaku tensaku hidden" data-id="${x.id}"></div>
       <details><summary>先生の査定をくわしく</summary>${s.parts ? A.breakdownHtml({ parts: s.parts.map(([name, got, max, group]) => ({ name, got, max, group })), kata: s.kata, hyogen: s.hyogen }, true) : ""}<ul class="pts">${(s.pts || []).map(([d, t]) => `<li class="${d > 0 ? "good" : "bad"}"><span class="d">${d > 0 ? "+" + d : d}</span><span>${esc(t)}</span></li>`).join("")}</ul>
       <div class="advice"><b>添削ポイント</b><br>${(s.advice || []).map(esc).join("<br>")}</div></details>` : `<div class="rbreak">未提出……</div>`}
     </div>`;
   }
+  // 結果発表の添削ビフォーアフター（どの句でも開ける。先生の査定はゆらぎがないので、その場で同じ点を出し直せる）
+  function openTensaku(id) {
+    if (!R || !window.Tensaku) return;
+    const r = ph().r;
+    const box = $("revealList").querySelector(`.r-tensaku[data-id="${id}"]`);
+    const btn = $("revealList").querySelector(`.r-ts-btn[data-id="${id}"]`);
+    const sub = subs(r)[id];
+    if (!box || !sub || sub.empty) return;
+    if (!box.classList.contains("hidden")) { box.classList.add("hidden"); if (btn) btn.textContent = "✍️ 添削ビフォーアフター"; return; }
+    const odai = A.odaiById(R.odai[r]);
+    const yomi = sub.yomi && sub.yomi.some(Boolean) ? sub.yomi : null;
+    const res = J.judge({ lines: sub.lines, yomi, odai });
+    window.Tensaku.show(box, res, odai, null);
+    if (btn) btn.textContent = "✍️ 添削をとじる";
+  }
   $("revealList").addEventListener("click", (e) => {
+    const tb = e.target.closest(".r-ts-btn");
+    if (tb) { openTensaku(tb.dataset.id); return; }
     const b = e.target.closest(".r-shikishi"); if (!b || !window.Shikishi || !R) return;
     const r = ph().r;
     const x = roundScores(r).find((y) => y.id === b.dataset.id);

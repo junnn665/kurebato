@@ -912,3 +912,14 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .chips.c3 .chip-y { font-size: 9.5px; letter-spacing: 0; white-space: nowrap; }
 .chips .chip:nth-child(n+7) { animation-delay: .22s; }
 @media (max-width: 360px) { .chips.c3 .chip-w { font-size: 15px; } }
+
+/* ---- 添削：案の切りかえ・対戦の結果発表 ---- */
+.ts-dots { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 2px; }
+.ts-dot { border: 1px solid var(--line); background: #fff; border-radius: 3px; padding: 3px 8px; font-size: 12px; font-weight: 700; color: var(--shu); font-family: var(--mincho); }
+.ts-dot b { color: var(--ink2); font-weight: 400; margin-right: 2px; font-family: var(--fude); }
+.ts-dot.on { background: var(--shu); color: #fff; border-color: var(--shu); }
+.ts-dot.on b { color: rgba(255,255,255,.85); }
+.r-tools { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+.r-tools .r-shikishi { margin: 0; }
+.r-tensaku { margin: 8px 0 0; padding: 10px 8px; }
+.r-tensaku .ts-tan { height: 168px; width: 76px; font-size: 16px; }
