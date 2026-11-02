@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div id="app">
@@ -68,7 +68,7 @@
     <div class="paper prose">
       <h3>はじめての一句（初心者モード）</h3>
       <ol>
-        <li>上五・中七・下五、それぞれ並んだ「言葉の札」から一枚ずつ選ぶだけ</li>
+        <li>上五・中七・下五、それぞれ並んだ「言葉の札」から一枚ずつ選ぶだけ。気に入る札がなければ、その行だけ「✍️ 自分で書く」欄に手で書いてもOK</li>
         <li>札の右上の数字は音の数。<b class="v-ari">季</b>の印は季語の札</li>
         <li>札には<b>罠</b>もまじっています（気持ちを言う言葉・ありがちな言い回し・季重なり・字余り）。先生にしかられて覚えよう</li>
         <li>「自分で直す」で、選んだ句をもとに書きかえることもできます</li>
@@ -173,6 +173,11 @@
     </div>
     <p class="easy-guide" id="easyGuide"></p>
     <div class="chips" id="easyChips"></div>
+    <div class="easy-type" id="easyType">
+      <div class="et-label">✍️ 札を使わず<b id="etLine">上五</b>を自分で書く</div>
+      <div class="et-row"><input id="easyInput" maxlength="20" autocomplete="off" enterkeyhint="done" placeholder="ここに書く"><span class="et-mora" id="easyInputMora">0</span><button class="btn" id="easyInputOk">決める</button></div>
+      <div class="et-yomi" id="easyInputYomi"></div>
+    </div>
     <div class="row3 easy-tools">
       <button class="btn" id="easyMore">🔄 ほかの札</button>
       <button class="btn" id="easyOdaiNext">🖼 お題をかえる</button>
@@ -274,7 +279,7 @@
       <div class="kind-title">対戦の種類</div>
       <div class="kind-pick" id="segKind">
         <button data-v="free" class="on"><span class="k-ico">✍️</span><b>自分で書く</b><small>五七五を自由に書いて勝負。🔰 の人だけ札で参加もできる</small></button>
-        <button data-v="fuda"><span class="k-ico">🎴</span><b>言葉の札バトル</b><small>全員に同じ札を配り、選び方で勝負。初心者どうしでも</small></button>
+        <button data-v="fuda"><span class="k-ico">🎴</span><b>言葉の札バトル</b><small>全員に同じ札。札を選んでも、手で書いてもOK</small></button>
       </div>
       <p class="note kind-note" id="kindNote"></p>
       <div class="field"><span>ラウンド数</span><div class="seg" id="segRounds"><button data-v="1">1</button><button data-v="3" class="on">3</button><button data-v="5">5</button></div></div>
@@ -347,19 +352,19 @@
   <div id="toasts" class="toasts"></div>
 </div>
 
-<script src="lib/qrcode.min.js?v=9"></script>
-<script src="js/fuzei.js?v=9"></script>
-<script src="js/kigo-alias.js?v=9"></script>
-<script src="js/kigo.js?v=9"></script>
-<script src="js/kotoba.js?v=9"></script>
-<script src="js/odai.js?v=9"></script>
-<script src="js/judge.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
-<script src="js/zukan.js?v=9"></script>
-<script src="js/shikishi.js?v=9"></script>
-<script src="js/tensaku.js?v=9"></script>
-<script src="js/meiku.js?v=9"></script>
-<script src="js/net.js?v=9"></script>
-<script src="js/banzuke.js?v=9"></script>
+<script src="lib/qrcode.min.js?v=12"></script>
+<script src="js/fuzei.js?v=12"></script>
+<script src="js/kigo-alias.js?v=12"></script>
+<script src="js/kigo.js?v=12"></script>
+<script src="js/kotoba.js?v=12"></script>
+<script src="js/odai.js?v=12"></script>
+<script src="js/judge.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
+<script src="js/zukan.js?v=12"></script>
+<script src="js/shikishi.js?v=12"></script>
+<script src="js/tensaku.js?v=12"></script>
+<script src="js/meiku.js?v=12"></script>
+<script src="js/net.js?v=12"></script>
+<script src="js/banzuke.js?v=12"></script>
 </body>
 </html>

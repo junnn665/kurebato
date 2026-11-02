@@ -245,16 +245,25 @@
       if (window.Zukan) window.Zukan.collect(lines, result.score);
     }, 1700);
   }
-  // 「型 38/40・表現 41/60」の内訳
-  function breakdownHtml(r) {
-    if (r.kata == null) return "";
-    const bar = (got, max, cls) => `<span class="bd-bar ${cls}"><i style="width:${Math.round((got / max) * 100)}%"></i></span>`;
-    return `<div class="breakdown">
-      <div class="bd-row"><span class="bd-name">型</span>${bar(r.kata, 40, "kata")}<span class="bd-num"><b>${r.kata}</b>/40</span></div>
-      <div class="bd-sub">${(r.parts || []).map((p) => `${p.name} ${p.got}/${p.max}`).join("　・　")}</div>
-      <div class="bd-row"><span class="bd-name">表現</span>${bar(r.hyogen, 60, "hyo")}<span class="bd-num"><b>${r.hyogen}</b>/60</span></div>
-      <div class="bd-sub">言わずに見せる・五感・具体的なモノ・新鮮さ・お題との距離</div>
-    </div>`;
+  // 採点の内訳：型3項目・表現6項目。項目ごとに点・しるし・先生のひとこと
+  const mark = (got, max) => { const r = got / max; return r >= 0.9 ? "◎" : r >= 0.65 ? "○" : r >= 0.4 ? "△" : "×"; };
+  function breakdownHtml(r, compact) {
+    if (!r || !r.parts || !r.parts.length) return "";
+    const pts = r.pts || [];
+    const sign = (d) => (d > 0 ? `+${d}` : d < 0 ? `${d}` : "");
+    const group = (g, total, max) => `
+      <div class="bd-group">
+        <div class="bd-ghead"><span class="bd-gname">${g}</span><span class="bd-gbar ${g === "型" ? "kata" : "hyo"}"><i style="width:${Math.round((total / max) * 100)}%"></i></span><span class="bd-gnum"><b>${total}</b>/${max}</span></div>
+        ${r.parts.filter((p) => p.group === g).map((p) => {
+          const notes = compact ? [] : pts.filter((x) => x.c === p.name && x.t);
+          return `<div class="bd-item">
+            <div class="bd-line"><span class="bd-mark m${mark(p.got, p.max)}">${mark(p.got, p.max)}</span><span class="bd-name">${p.name}</span><span class="bd-bar ${g === "型" ? "kata" : "hyo"}"><i style="width:${Math.round((p.got / p.max) * 100)}%"></i></span><span class="bd-num">${p.got}<small>/${p.max}</small></span></div>
+            ${compact ? "" : `<div class="bd-desc">${esc(p.desc || "")}</div>`}
+            ${notes.length ? `<ul class="bd-notes">${notes.map((x) => `<li class="${x.k}">${x.d ? `<b>${sign(x.d)}</b>` : ""}${esc(x.t)}</li>`).join("")}</ul>` : ""}
+          </div>`;
+        }).join("")}
+      </div>`;
+    return `<div class="breakdown${compact ? " compact" : ""}">${group("型", r.kata, 40)}${group("表現", r.hyogen, 60)}</div>`;
   }
   const vClass = (v) => (v === "才能アリ" ? "ari" : v === "凡人" ? "bon" : v === "才能ナシ" ? "nashi" : "none");
   function renderResult(el, r, { name }) {
@@ -270,10 +279,6 @@
       </div>
       <div class="paper">
         ${breakdownHtml(r)}
-        <div class="pts-h">型の見どころ</div>
-        <ul class="pts">${r.pts.filter((p) => p.c === "型").map((p) => `<li class="${p.k}"><span class="d">${p.d === 0 && p.k === "good" ? "◎" : sign(p.d)}</span><span>${esc(p.t)}</span></li>`).join("")}</ul>
-        <div class="pts-h">表現の見どころ</div>
-        <ul class="pts">${r.pts.filter((p) => p.c !== "型").map((p) => `<li class="${p.k}"><span class="d">${sign(p.d)}</span><span>${esc(p.t)}</span></li>`).join("") || `<li class="info"><span class="d">・</span><span>とくに加点・減点はありません</span></li>`}</ul>
         <div class="advice"><b>添削ポイント</b><br>${r.advice.map(esc).join("<br>")}</div>
         <p class="note">音数：${r.moras.join("・")}（${r.reads.map((x) => esc(x.yomi.replace(/〇/g, "？"))).join(" / ")}）</p>
       </div>`;
@@ -407,19 +412,26 @@
     const s = E.odai && E.odai.season;
     return s === "梅雨" ? "夏" : !s || s === "四季" ? todaySeason() : s;
   }
+  // 一度に出す札は各行12枚（「ほかの札」を押すと、いま出ている札とは別の12枚）
+  const OFFER = 12;
+  const seasonOfWord = (w) => { const k = window.KIGO.find(w)[0]; return k ? (k.season === "新年" ? "冬" : k.season) : null; };
   function makeOffer(i) {
     const prev = E.offers[i];
     let out;
     if (i === 0) {
       const s = easySeason();
       const pool = s === "新年" ? [...K.kami.新年, ...K.kami.冬] : K.kami[s];
-      out = [...take(pool, 4, prev), ...take(K.kami.無季, 1, prev), ...take(K.kami.罠, 1, prev)];
+      out = [...take(pool, 8, prev), ...take(K.kami.無季, 2, prev), ...take(K.kami.罠, 2, prev)];
     } else if (i === 1) {
-      out = [...take(K.naka.ふつう, 5, prev), ...take(K.naka.罠, 1, prev)];
+      out = [...take(K.naka.ふつう, 10, prev), ...take(K.naka.罠, 2, prev)];
     } else {
-      out = [...take(K.shimo.ふつう, 4, prev), ...take(K.shimo.季, 1, prev), ...take(K.shimo.罠, 1, prev)];
+      // 下五の季語の札は、お題の季節のものを1枚と、ほかの季節のものを1枚（季重なり・季違いの罠）
+      const s = easySeason() === "新年" ? "冬" : easySeason();
+      const same = K.shimo.季.filter((x) => seasonOfWord(x.w) === s);
+      const other = K.shimo.季.filter((x) => seasonOfWord(x.w) !== s);
+      out = [...take(K.shimo.ふつう, 8, prev), ...take(same, 1, prev), ...take(other, 1, prev), ...take(K.shimo.罠, 2, prev)];
     }
-    E.offers[i] = shuffle(out);
+    E.offers[i] = shuffle(out).slice(0, OFFER);
   }
   function startEasy(keepOdai, mp) {
     E.mp = mp || null;
@@ -450,13 +462,40 @@
     $("easyTimer").textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
     $("easyTimer").classList.toggle("hurry", sec <= 20);
     if (left <= 600 && !E.submitted) {
-      // 時間切れ：空いている欄は、出ている札から自動で埋めて提出
-      E.picks = E.picks.map((p, i) => p || E.offers[i].find((x) => !/寂し|悲し|美し|思い出|綺麗|星降る|走って/.test(x.w)) || E.offers[i][0]);
+      // 時間切れ：書きかけの言葉があればそれを使い、残りの空いた欄は出ている札から自動で埋めて提出
+      if (!E.picks[E.active] && $("easyInput").value.trim()) takeTyped();
+      E.picks = E.picks.map((p, i) => p || E.offers[i].find((x) => !K.isTrap(x)) || E.offers[i][0]);
       submitEasy(true);
     }
     if (left <= 0) clearInterval(easyTimer);
   }
+  function updateTypedMora() {
+    const w = $("easyInput").value.trim();
+    const r = w ? J.readLine(w, J.tokenize(w)) : { mora: 0, yomi: "", guess: false };
+    const t = E.active === 1 ? 7 : 5;
+    $("easyInputMora").textContent = r.mora + (r.guess ? "?" : "");
+    $("easyInputMora").className = "et-mora" + (!w ? "" : r.mora === t ? " ok" : " ng");
+    $("easyInputYomi").textContent = w ? r.yomi.replace(/〇/g, "？") : "";
+    $("easyInputOk").disabled = !w || E.submitted;
+  }
+  function takeTyped() {
+    const w = $("easyInput").value.replace(/\s+/g, "").trim();
+    if (!w || E.submitted) return false;
+    E.picks[E.active] = { w, y: null, typed: true };
+    return true;
+  }
+  $("easyInput").addEventListener("input", updateTypedMora);
+  $("easyInputOk").addEventListener("click", () => {
+    if (!takeTyped()) return;
+    $("easyInput").blur();
+    const next = E.picks.findIndex((p) => !p);
+    if (next >= 0) E.active = next;
+    renderEasy();
+  });
+  $("easyInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); $("easyInputOk").click(); } });
   function lockEasy(on) {
+    $("easyInput").disabled = on;
+    $("easyInputOk").disabled = on || !$("easyInput").value.trim();
     $("easySubmit").disabled = on || !E.picks.every(Boolean);
     $("easyMore").disabled = on;
     $("easyChips").querySelectorAll("button").forEach((b) => (b.disabled = on));
@@ -465,7 +504,7 @@
   function submitEasy(auto) {
     if (E.submitted || !E.picks.every(Boolean)) return;
     const lines = E.picks.map((p) => p.w);
-    const result = J.judge({ lines, yomi: E.picks.map((p) => p.y), odai: E.odai });
+    const result = J.judge({ lines, yomi: E.picks.map((p) => p.y || null), odai: E.odai });
     if (E.mp) {
       E.submitted = true;
       renderEasy();
@@ -478,10 +517,18 @@
   }
   function renderEasy() {
     $("easyOdai").innerHTML = odaiHtml(E.odai, true);
-    $("easySlots").innerHTML = E.picks.map((p, i) => `<button class="slot${i === E.active ? " on" : ""}${p ? " filled" : ""}" data-i="${i}"><span class="slot-name">${LINE_NAMES[i]}</span><span class="slot-word">${p ? esc(p.w) : "　？　"}</span></button>`).join("");
+    $("easySlots").innerHTML = E.picks.map((p, i) => `<button class="slot${i === E.active ? " on" : ""}${p ? " filled" : ""}${p && p.typed ? " typed" : ""}" data-i="${i}"><span class="slot-name">${LINE_NAMES[i]}</span><span class="slot-word">${p ? esc(p.w) : "　？　"}</span>${p && p.typed ? '<span class="slot-typed">✍️</span>' : ""}</button>`).join("");
     $("easyPreview").innerHTML = `<div class="mini-tanzaku">${E.picks.map((p) => `<span>${p ? esc(p.w) : "　"}</span>`).join("")}</div>`;
-    $("easyGuide").innerHTML = E.picks.every(Boolean) ? "そろいました。札を入れかえるなら、上の欄をタップ" : LINE_GUIDE[E.active];
+    $("easyGuide").innerHTML = E.picks.every(Boolean) ? "そろいました。入れかえるなら、上の欄をタップ" : LINE_GUIDE[E.active];
+    // 手で書く欄：いまの行の名前と、手で書いた言葉が入っていればそれを出す
+    $("etLine").textContent = LINE_NAMES[E.active];
+    const cur = E.picks[E.active];
+    if (document.activeElement !== $("easyInput")) $("easyInput").value = cur && cur.typed ? cur.w : "";
+    $("easyInput").placeholder = `${LINE_NAMES[E.active]}（${E.active === 1 ? 7 : 5}音）を書く`;
+    updateTypedMora();
     const kigoIn = (w) => window.KIGO.find(w).length > 0;
+    // 上五・下五（5音）は3列、中七（7音）は2列
+    $("easyChips").classList.toggle("c3", E.active !== 1);
     $("easyChips").innerHTML = E.offers[E.active].map((x, j) => {
       const sel = E.picks[E.active] && E.picks[E.active].w === x.w;
       const mora = J.countMora(x.y);

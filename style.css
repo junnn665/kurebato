@@ -856,3 +856,59 @@ body::after { bottom: 0; border-top: 1.5px solid var(--ai); transform: scaleY(-1
 .bd-sub { font-size: 11px; color: var(--ink2); padding-left: 50px; margin-top: 2px; font-family: var(--mincho); }
 .pts-h { font-family: var(--fude); font-size: 15px; margin: 10px 0 0; color: var(--ink2); }
 .ts-lead small { font-size: 12px; color: var(--ink2); }
+
+/* ---- 札の画面：手で書く ---- */
+.easy-type { margin-top: 10px; padding: 10px 12px; border: 1.5px dashed var(--line); border-radius: 4px; background: rgba(255,255,255,.7); }
+.et-label { font-family: var(--mincho); font-size: 13px; color: var(--ink2); margin-bottom: 6px; }
+.et-label b { font-family: var(--fude); font-weight: 400; font-size: 16px; color: var(--shu); margin: 0 2px; }
+.et-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+.et-row input { min-width: 0; font-family: var(--fude); font-size: 20px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 4px; background: #fff; }
+.et-row .btn { width: auto; padding: 9px 14px; font-size: 14px; }
+.et-mora { min-width: 36px; text-align: center; font-weight: 900; font-size: 14px; border-radius: 3px; padding: 4px 0; background: #ece3d1; color: var(--ink2); }
+.et-mora.ok { background: var(--ok); color: #fff; } .et-mora.ng { background: var(--shu); color: #fff; }
+.et-yomi { font-size: 11px; color: var(--ink2); min-height: 14px; margin-top: 3px; padding-left: 4px; }
+.slot { position: relative; }
+.slot.typed { border-color: #7b4a2a; background: #fbf4ea; }
+.slot-typed { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; }
+
+/* ---- 採点の内訳（9項目） ---- */
+.breakdown { border-bottom: 0; padding-bottom: 0; }
+.bd-group { margin-bottom: 12px; }
+.bd-ghead { display: grid; grid-template-columns: 46px 1fr 70px; align-items: center; gap: 8px; padding: 6px 0 4px; border-bottom: 1.5px solid var(--ink); margin-bottom: 4px; }
+.bd-gname { font-family: var(--fude); font-size: 22px; }
+.bd-gbar { height: 12px; border-radius: 6px; background: #e6dac0; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.12); }
+.bd-gbar i { display: block; height: 100%; border-radius: 6px; }
+.bd-gbar.kata i { background: linear-gradient(90deg, #1f3a63, #3d5f92); }
+.bd-gbar.hyo i { background: linear-gradient(90deg, #a92e22, #d34a3b); }
+.bd-gnum { text-align: right; font-family: var(--mincho); font-size: 13px; color: var(--ink2); }
+.bd-gnum b { font-size: 22px; color: var(--ink); }
+.bd-item { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.bd-item:last-child { border-bottom: 0; }
+.bd-line { display: grid; grid-template-columns: 22px 98px 1fr 50px; align-items: center; gap: 6px; }
+.bd-mark { font-family: var(--mincho); font-weight: 800; font-size: 15px; text-align: center; }
+.bd-mark.m◎ { color: var(--shu); } .bd-mark.m○ { color: var(--ai); } .bd-mark.m△ { color: #a8802a; } .bd-mark.m× { color: var(--nezumi); }
+.bd-item .bd-name { font-family: var(--fude); font-size: 16px; white-space: nowrap; }
+.bd-item .bd-bar { height: 7px; }
+.bd-item .bd-num { font-family: var(--mincho); font-weight: 800; font-size: 15px; text-align: right; color: var(--ink); }
+.bd-item .bd-num small { font-weight: 500; font-size: 11px; color: var(--ink2); }
+.bd-desc { font-size: 11px; color: var(--ink2); padding-left: 28px; font-family: var(--mincho); }
+.bd-notes { list-style: none; margin: 4px 0 0; padding: 0 0 0 28px; font-family: var(--mincho); font-size: 13px; line-height: 1.6; }
+.bd-notes li { padding: 2px 0; }
+.bd-notes li b { display: inline-block; min-width: 26px; font-variant-numeric: tabular-nums; }
+.bd-notes li.good b { color: var(--ok); } .bd-notes li.bad b { color: var(--shu); }
+.bd-notes li.good::before { content: "○ "; color: var(--ok); } .bd-notes li.bad::before { content: "▲ "; color: var(--shu); } .bd-notes li.info::before { content: "・ "; color: var(--ink2); }
+.breakdown.compact { margin: 8px 0; }
+.breakdown.compact .bd-item { padding: 3px 0; border: 0; }
+.breakdown.compact .bd-ghead { padding: 2px 0; }
+.breakdown.compact .bd-gname { font-size: 17px; }
+.bd-sub, .pts-h { display: none; }
+.bd-line { grid-template-columns: 22px auto 1fr 46px; }
+.bd-item .bd-name { min-width: 64px; padding-right: 4px; }
+
+/* 札12枚：5音の行は3列 */
+.chips.c3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.chips.c3 .chip { padding: 11px 2px 6px; }
+.chips.c3 .chip-w { font-size: 17px; letter-spacing: -.02em; white-space: nowrap; }
+.chips.c3 .chip-y { font-size: 9.5px; letter-spacing: 0; white-space: nowrap; }
+.chips .chip:nth-child(n+7) { animation-delay: .22s; }
+@media (max-width: 360px) { .chips.c3 .chip-w { font-size: 15px; } }

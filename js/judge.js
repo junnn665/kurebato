@@ -2,7 +2,7 @@
  *
  * よみ: kuromoji.js（形態素解析・ブラウザで動く辞書。vendor/kuromoji に同梱）で自動で出す。
  *       読みこめないときは「漢字1字＝2音」で推定し、画面でよみを手で直せる。
- * 査定: 「型」40点（音数15・季語15・切れ10）＋「表現」60点（言わずに見せる・五感・具体・新鮮さ・お題との距離）。
+ * 査定: 「型」40点（音数15・季語15・切れ10）＋「表現」60点（見せる12・具体12・五感10・季語の生かし方8・調べ8・発想10）の9項目。
  *       同じ句なら必ず同じ点（ゆらぎなし）。名句と見本句で配点を合わせてある（tools/calibrate.js）。
  *       70 点以上「才能アリ」、50〜69 点「凡人」、49 点以下「才能ナシ」。
  */
@@ -86,12 +86,12 @@
   }
 
   // ---------- 査定 ----------
-  const EMOTION = ["悲しい", "悲しき", "悲しさ", "かなしい", "寂しい", "寂しき", "淋しい", "さびしい", "さみしい", "嬉しい", "うれしい", "楽しい", "たのしい", "懐かしい", "なつかしい", "切ない", "せつない", "美しい", "うつくしい", "綺麗", "きれい", "キレイ", "素敵", "すてき", "幸せ", "しあわせ", "感動", "愛しい", "恋しい", "辛い", "つらい", "苦しい", "怖い", "こわい", "ワクワク", "わくわく", "ドキドキ", "どきどき", "最高", "大好き"];
+  const EMOTION = ["ありがとう", "ごめんね", "さようなら", "がんばれ", "頑張れ", "頑張ろう", "悲しい", "悲しき", "悲しさ", "かなしい", "寂しい", "寂しき", "淋しい", "さびしい", "さみしい", "嬉しい", "うれしい", "楽しい", "たのしい", "懐かしい", "なつかしい", "切ない", "せつない", "美しい", "うつくしい", "綺麗", "きれい", "キレイ", "素敵", "すてき", "幸せ", "しあわせ", "感動", "愛しい", "恋しい", "辛い", "つらい", "苦しい", "怖い", "こわい", "ワクワク", "わくわく", "ドキドキ", "どきどき", "最高", "大好き"];
   const EXPLAIN = ["ので", "だから", "なので", "けれど", "けれども", "だけど", "なのに", "ため", "それで", "しかし", "つまり"];
   const SIMILE = ["ように", "ような", "みたい", "のごと", "如く", "ごとく"];
   const KIREJI = ["や", "かな", "けり"];
   const SENSE = {
-    色: ["赤", "青", "白", "黒", "黄", "緑", "紫", "茶色", "金色", "銀色", "朱", "藍", "紺", "灰色", "桃色", "水色"],
+    色: ["赤", "青", "白", "黒", "黄", "緑", "紫", "茶色", "金", "銀", "紅", "碧", "朱", "藍", "紺", "灰色", "桃色", "水色"],
     音: ["音", "声", "鳴", "響", "ざわ", "鐘", "囁", "笛"],
     匂: ["匂", "香", "臭", "におい", "かおり"],
     触: ["冷た", "熱", "ぬる", "湿", "乾", "ざらざら", "重た", "柔らか", "硬"],
@@ -122,7 +122,7 @@
     });
     const moras = reads.map((r) => r.mora);
     // 点は「型」（40点：音数15・季語15・切れ10）と「表現」（60点）の二本立て。ゆらぎは入れない
-    const pts = []; // { d: 点の増減, t: コメント, k: good|bad|info, c: 型|表現 }
+    const pts = []; // { d: 点の増減, t: コメント, k: good|bad|info, c: 項目の名前（音数・季語・切れ・見せる・具体・五感・季語の生かし方・調べ・発想） }
     const add = (d, t, k, c) => pts.push({ d, t, k: k || (d > 0 ? "good" : d < 0 ? "bad" : "info"), c: c || "表現" });
     const advice = [];
 
@@ -141,18 +141,18 @@
       if (reads[i].guess && Math.abs(diff) <= 3) { unsure++; return; }
       let d;
       if (diff > 0) {
-        if (i === 0) { d = diff > 2 ? -4 : -1; add(d, diff > 2 ? `上五が${m}音。上五の字余りは許されやすいけれど、ここまで余ると重い。` : `上五が${m}音の字余り。上五なら許容範囲です。`, null, "型"); }
-        else if (i === 1) { d = diff >= 2 ? -10 : -6; add(d, `中七が${m}音の${m === 8 ? "「中八」" : "字余り"}。リズムがもたつきます。`, null, "型"); advice.push("中七の助詞（の・が・を・は）を一つ削れないか探してみましょう。"); }
-        else { d = diff >= 2 ? -7 : -4; add(d, `下五が${m}音の字余り。句の着地がもたつきます。`, null, "型"); advice.push("下五は名詞で5音にきっちり収めると、句が締まります。"); }
+        if (i === 0) { d = diff > 2 ? -4 : -1; add(d, diff > 2 ? `上五が${m}音。上五の字余りは許されやすいけれど、ここまで余ると重い。` : `上五が${m}音の字余り。上五なら許容範囲です。`, null, "音数"); }
+        else if (i === 1) { d = diff >= 2 ? -10 : -6; add(d, `中七が${m}音の${m === 8 ? "「中八」" : "字余り"}。リズムがもたつきます。`, null, "音数"); advice.push("中七の助詞（の・が・を・は）を一つ削れないか探してみましょう。"); }
+        else { d = diff >= 2 ? -7 : -4; add(d, `下五が${m}音の字余り。句の着地がもたつきます。`, null, "音数"); advice.push("下五は名詞で5音にきっちり収めると、句が締まります。"); }
       } else {
         d = -diff >= 2 ? -8 : -5;
-        add(d, `${names[i]}が${m}音で字足らず。音が足りないと、読み手がつまずきます。`, null, "型");
+        add(d, `${names[i]}が${m}音で字足らず。音が足りないと、読み手がつまずきます。`, null, "音数");
       }
       onsu += d;
     });
     onsu = Math.max(0, onsu);
-    if (onsu === 15) add(0, unsure ? "五・七・五はだいたい守れていそうです（よみは推定）。" : "五・七・五のリズムがきちんと守れています。", "good", "型");
-    if (guessed) add(0, "よみを推定した部分があります（漢字1字＝2音）。音数がちがうときは「よみを直す」で直せます。", "info", "型");
+    if (onsu === 15) add(0, unsure ? "五・七・五はだいたい守れていそうです（よみは推定）。" : "五・七・五のリズムがきちんと守れています。", "good", "音数");
+    if (guessed) add(0, "よみを推定した部分があります（漢字1字＝2音）。音数がちがうときは「よみを直す」で直せます。", "info", "音数");
 
     // --- 季語（15） ---
     const kigo = window.KIGO.find(text);
@@ -160,21 +160,21 @@
     let kigoPt;
     if (kigo.length === 0) {
       kigoPt = 4;
-      add(-11, "季語が見当たりません。無季の句は上級者の技。まずは季語を一つ入れましょう。", null, "型");
+      add(-11, "季語が見当たりません。無季の句は上級者の技。まずは季語を一つ入れましょう。", null, "季語");
       const s = odaiSeason(odai);
       const pool = window.KIGO.SUGGEST[s && s !== "四季" ? s : ["春", "夏", "秋", "冬"][hashStr(text) % 4]];
       advice.push(`たとえば「${pool.slice(hashStr(text) % 4, hashStr(text) % 4 + 3).join("」「")}」のような季語を入れてみては。`);
     } else if (kigo.length === 1) {
       kigoPt = 15;
-      add(0, `季語「${kigo[0].w}」（${kigo[0].season}）が一句の主役になっています。`, "good", "型");
+      add(0, `季語「${kigo[0].w}」（${kigo[0].season}）が一句の主役になっています。`, "good", "季語");
     } else {
       const ws = kigo.map((k) => `${k.w}（${k.season}）`).join("・");
-      if (seasons.length > 1) { kigoPt = 5; add(-10, `季語が${kigo.length}つ、しかも季節がばらばら（${ws}）。季違いの季重なりです。`, null, "型"); }
-      else { kigoPt = 9; add(-6, `季語が${kigo.length}つ（${ws}）。季重なりで主役がぼやけます。`, null, "型"); }
+      if (seasons.length > 1) { kigoPt = 5; add(-10, `季語が${kigo.length}つ、しかも季節がばらばら（${ws}）。季違いの季重なりです。`, null, "季語"); }
+      else { kigoPt = 9; add(-6, `季語が${kigo.length}つ（${ws}）。季重なりで主役がぼやけます。`, null, "季語"); }
       advice.push(`季語は「${kigo[0].w}」か「${kigo[1].w}」のどちらか一つに絞り、空いた音で“モノ”を描きましょう。`);
     }
     const os = odaiSeason(odai);
-    if (kigo.length && os && os !== "四季" && !seasons.includes(os)) add(0, `お題は${os}の場面ですが、季語は${seasons.join("・")}。お題を大胆に飛ばした発想とも読めます。`, "info", "表現");
+    if (kigo.length && os && os !== "四季" && !seasons.includes(os)) add(0, `お題は${os}の場面ですが、季語は${seasons.join("・")}。お題を大胆に飛ばした発想とも読めます。`, "info", "季語の生かし方");
 
     // --- 切れ（10） ---
     const ends = lines.map((l) => l.replace(/[。、！!？?]+$/, ""));
@@ -189,48 +189,57 @@
     if (all) { const last = [...toks[2]].reverse().find((t) => t.pos !== "記号"); taigen = !!last && last.pos === "名詞"; }
     else taigen = /[㐀-鿿ァ-ヺー]$/.test(ends[2]); // 辞書なし：漢字かカタカナで終われば名詞とみなす
     let kirePt;
-    if (kireOk.length === 1) { kirePt = 10; add(0, `切れ字「${kireOk[0].k}」で一句に「間」が生まれ、場面がくっきりしました。`, "good", "型"); }
-    else if (kireOk.length >= 2) { kirePt = 3; add(-7, "切れ字が二つ。切れは一句に一つが原則。どちらが言いたいことか決めましょう。", null, "型"); }
-    else if (taigen) { kirePt = 8; add(0, "名詞で止めた「体言止め」。句がすっと締まり、余韻が残ります。", "good", "型"); }
-    else { kirePt = 6; add(-4, "切れがなく、文章のように流れています。「や」で切るか、名詞で止めると句が締まります。", null, "型"); }
+    if (kireOk.length === 1) { kirePt = 10; add(0, `切れ字「${kireOk[0].k}」で一句に「間」が生まれ、場面がくっきりしました。`, "good", "切れ"); }
+    else if (kireOk.length >= 2) { kirePt = 3; add(-7, "切れ字が二つ。切れは一句に一つが原則。どちらが言いたいことか決めましょう。", null, "切れ"); }
+    else if (taigen) { kirePt = 8; add(0, "名詞で止めた「体言止め」。句がすっと締まり、余韻が残ります。", "good", "切れ"); }
+    else { kirePt = 6; add(-4, "切れがなく、文章のように流れています。「や」で切るか、名詞で止めると句が締まります。", null, "切れ"); }
     const kata = onsu + kigoPt + kirePt;
 
-    // ===== 表現（60点） =====
-    let hy = 31;
-    const ex = (d, t, k) => { hy += d; add(d, t, k, "表現"); };
-    // --- 言わずに見せる ---
+    // ===== 表現（60点）：六つの見どころ =====
+    // 見せる12・具体12・五感10・季語の生かし方8・調べ8・発想10
+    const P = {
+      見せる: { got: 9, max: 12 },
+      具体: { got: 3, max: 12 },
+      五感: { got: 3, max: 10 },
+      季語の生かし方: { got: kigo.length ? 4 : 1, max: 8 },
+      調べ: { got: 4, max: 8 },
+      発想: { got: 5, max: 10 },
+    };
+    const ex = (item, d, t, k) => { P[item].got += d; add(d, t, k, item); };
+
+    // --- 見せる（言わずに見せる） ---
     const emo = EMOTION.filter((w) => text.includes(w));
     if (emo.length) {
-      ex(-8 * Math.min(emo.length, 2), `「${emo[0]}」と気持ちを言ってしまうと、読み手が想像する余地がなくなります。`);
+      ex("見せる", -7 * Math.min(emo.length, 2), `「${emo[0]}」と気持ちを言ってしまうと、読み手が想像する余地がなくなります。`);
       advice.push(`「${emo[0]}」を消して、その気持ちがにじむ“モノ”や“しぐさ”を一つ置きましょう。`);
     }
     const exp = EXPLAIN.filter((w) => text.includes(w));
-    if (exp.length) ex(-6, `「${exp[0]}」は理屈・説明の言葉。俳句では理由を言わず、並べて見せるだけで伝わります。`);
+    if (exp.length) ex("見せる", -5, `「${exp[0]}」は理屈・説明の言葉。俳句では理由を言わず、並べて見せるだけで伝わります。`);
     const sim = SIMILE.filter((w) => text.includes(w));
-    if (sim.length) ex(-3, `「${sim[0]}」の直喩は便利なぶん、安易になりがち。比喩にするなら、だれも思いつかない取り合わせを。`);
+    if (sim.length) ex("見せる", -2, `「${sim[0]}」の直喩は便利なぶん、安易になりがち。比喩にするなら、だれも思いつかない取り合わせを。`);
+    const murmur = ends.find((l) => /(ろう|よう|たい|たく|ましょう|だな|だね|だよ|なあ)$/.test(l));
+    if (murmur) ex("見せる", -4, "「〜したい」「〜しよう」「〜だな」のような気持ち・つぶやきが出ています。言わずに、景色に語らせましょう。");
+    if (!emo.length && !exp.length && !murmur) ex("見せる", 3, "気持ちや理屈を言わず、景色だけで見せています。");
 
-    // --- 五感・具体 ---
-    const senses = Object.entries(SENSE).filter(([, ws]) => ws.some((w) => text.includes(w))).map(([k]) => k);
-    if (senses.length) ex(Math.min(senses.length * 3, 8), `${senses.join("・")}の言葉があって、映像や感覚が立ち上がります。`);
-    else advice.push("色・音・匂い・手ざわりなど、五感の言葉を一つ入れると映像がはっきりします。");
-    if (NUM_RE.test(text)) ex(3, "数字が入って、景色が具体的になりました。");
+    // --- 具体（手に取れるモノ・固有名詞・数字） ---
+    let specific = [];
     if (all) {
-      const verbs = all.filter((t) => t.pos === "動詞" && t.pos_detail_1 === "自立");
-      if (verbs.length >= 3) {
-        ex(-5, `動詞が${verbs.length}つ（${uniq(verbs.map((v) => v.basic_form)).join("・")}）。動きが多いと焦点がぼやけます。`);
-        advice.push("動詞は一つか二つに。いちばん大事な動きだけを残しましょう。");
-      }
       const nouns = all.filter((t) => t.pos === "名詞" && !["非自立", "代名詞", "数", "接尾"].includes(t.pos_detail_1));
-      // 季語でも、ありふれた言葉でもない「具体的なモノ」がいくつあるか
       const kigoText = kigo.map((k) => k.w).join("|");
-      const specific = uniq(nouns.map((t) => t.surface_form)).filter((w) => !GENERIC.includes(w) && !(kigoText && kigoText.includes(w)) && !window.KIGO.find(w).length && w.length >= 1);
-      if (specific.length >= 2) ex(5, `「${specific.slice(0, 2).join("」「")}」と具体的なモノが描けていて、景色が手に取れます。`);
-      else if (specific.length === 1) ex(2, `「${specific[0]}」が具体的。もう一つ、手に取れるモノがあるとさらに立体的に。`);
-      else { ex(kigo.length ? -2 : -4, "空・道・家・君など、ありふれた言葉が中心でふわっとした印象。自分だけが見た具体的なモノを一つ。"); advice.push("「空」「道」より「改札口」「銀の匙」のように、手に取れる具体的なモノを。"); }
-      if (all.some((t) => t.pos === "名詞" && t.pos_detail_1 === "固有名詞")) ex(3, "固有名詞が効いて、場所や時代が見えます。");
-    }
+      specific = uniq(nouns.map((t) => t.surface_form)).filter((w) => !GENERIC.includes(w) && !(kigoText && kigoText.includes(w)) && !window.KIGO.find(w).length);
+      if (specific.length >= 2) ex("具体", 6, `「${specific.slice(0, 2).join("」「")}」と具体的なモノが描けていて、景色が手に取れます。`);
+      else if (specific.length === 1) ex("具体", 3, `「${specific[0]}」が具体的。もう一つ、手に取れるモノがあるとさらに立体的に。`);
+      else { ex("具体", kigo.length ? -2 : -3, "空・道・家・君など、ありふれた言葉が中心でふわっとした印象。自分だけが見た具体的なモノを一つ。"); advice.push("「空」「道」より「改札口」「銀の匙」のように、手に取れる具体的なモノを。"); }
+      if (all.some((t) => t.pos === "名詞" && t.pos_detail_1 === "固有名詞")) ex("具体", 2, "固有名詞が効いて、場所や時代が見えます。");
+    } else P.具体.got = 7; // 辞書なし：判定できないので中くらい
+    if (NUM_RE.test(text)) ex("具体", 2, "数字が入って、景色がくっきりしました。");
 
-    // --- 季語に当たり前の動きを足している（雪が降る・花びら舞う・とんぼが飛ぶ…） ---
+    // --- 五感 ---
+    const senses = Object.entries(SENSE).filter(([, ws]) => ws.some((w) => text.includes(w))).map(([k]) => k);
+    if (senses.length) ex("五感", Math.min(senses.length * 3, 7), `${senses.join("・")}の言葉があって、映像や感覚が立ち上がります。`);
+    else { add(0, "色・音・匂い・手ざわりなどの言葉がまだありません。", "info", "五感"); advice.push("色・音・匂い・手ざわりなど、五感の言葉を一つ入れると映像がはっきりします。"); }
+
+    // --- 季語の生かし方 ---
     const OBVIOUS = [
       [/(雪|雨|霰|霙|時雨|五月雨|夕立)[がのはも]?(降|ふ[るりっ])/, "降る"],
       [/(花|桜|花びら|紅葉|もみじ|落葉|落ち葉|枯葉)[がのはも]?(舞|散|ちる|ちり|まう|まい)/, "舞う・散る"],
@@ -240,47 +249,56 @@
       [/(風|木枯し?|凩|東風|春一番)[がのはも]?(吹|ふく|ふい)/, "吹く"],
     ];
     const obv = OBVIOUS.find(([re]) => re.test(text));
-    if (obv) { ex(-5, `季語に「${obv[1]}」という当たり前の動きを足しています。季語はそれだけで景色が浮かぶので、空いた音で別のものを描きましょう。`); advice.push("季語の説明（雪が降る・花が散る など）はやめて、その音で季語とは別の“モノ”を一つ。"); }
-    // --- 気持ち・意志・つぶやきを言う（帰ろう・行きたい・きれいだな） ---
-    if (/(ろう|よう|たい|たく|ましょう|だな|だね|だよ|かなあ|なあ)$|(たい|たく|ろう|よう)[、。]?$/.test(ends.join("|").replace(/\|/g, "\n").split("\n").find((l) => /(ろう|よう|たい|たく|ましょう|だな|だね|だよ|なあ)$/.test(l)) || "")) {
-      ex(-4, "「〜したい」「〜しよう」「〜だな」のような気持ち・つぶやきが出ています。言わずに、景色に語らせましょう。");
-    }
-    // --- 報告調の止め（学校へ・飛んでいる） ---
-    if (/(へ|ている|ていた|でいる|でいた|ました|です)$/.test(ends[2])) ex(-3, "下五が「〜へ」「〜ている」の報告調。名詞で止めるか、切れ字で締めると句になります。");
-    // --- 季節の名前をそのまま使った季語（春の風・冬の朝…）は少し手軽 ---
-    if (kigo.length === 1 && /^(春|夏|秋|冬)の/.test(kigo[0].w)) ex(-2, `「${kigo[0].w}」のように季節の名前をそのまま入れた季語は手軽なぶん、印象が薄くなりがち。もっと具体的な季語も探してみては。`);
-    // --- 文語の調べ（けり・ぬ・たる・なり…） ---
-    if (/(けり|けむ|らむ|ぬべし|たる|たり|なり|哉|ぞ|ぬ)$/.test(ends[2]) || /(たる|ける|なる|へば|ねば)/.test(text)) ex(2, "文語の言い回しが句に格調を与えています。");
-
-    // --- 手垢のついた表現・新鮮さ ---
-    const cl = CLICHE.filter((w) => text.includes(w));
-    if (cl.length) ex(-5, `「${cl[0]}」はよく見かける言い回し。あなただけの発見を一つ。`);
-    const clo = CLICHE_ONO.filter((w) => text.includes(w));
-    if (clo.length) ex(-4, `「${clo[0]}」は手垢のついたオノマトペ。自分の耳で聞いた音にしてみては。`);
-    else {
-      const ono = text.match(/([ぁ-ゖ]{2})\1|([ァ-ヺ]{2})\2/);
-      if (ono) ex(3, `オノマトペ「${ono[0]}」が新鮮。音がそのまま景色になっています。`);
+    if (obv) { ex("季語の生かし方", -4, `季語に「${obv[1]}」という当たり前の動きを足しています。季語はそれだけで景色が浮かぶので、空いた音で別のものを描きましょう。`); advice.push("季語の説明（雪が降る・花が散る など）はやめて、その音で季語とは別の“モノ”を一つ。"); }
+    if (kigo.length === 1 && /^(春|夏|秋|冬)の/.test(kigo[0].w)) ex("季語の生かし方", -1, `「${kigo[0].w}」のように季節の名前をそのまま入れた季語は手軽なぶん、印象が薄くなりがち。`);
+    if (kigo.length === 1 && !obv && specific.length >= 1) {
+      const kl = lines.findIndex((l) => window.KIGO.find(l).length);
+      const others = lines.filter((l, i) => i !== kl).join("");
+      if (specific.some((w) => others.includes(w))) ex("季語の生かし方", 3, `季語「${kigo[0].w}」と、別の行の「${specific.find((w) => others.includes(w))}」の取り合わせ。ふたつが響き合っています。`);
     }
 
-    // --- お題との距離 ---
-    if (odai && odai.kw) {
-      const hit = odai.kw.filter((k) => text.includes(k));
-      if (hit.length >= 3) { ex(-6, "お題の場面をそのままなぞっています。写真に写っていない“何か”を一つ。"); advice.push("お題に写っているものは一つまでに。残りの音で、写真の外（音・匂い・記憶）を描きましょう。"); }
-      else if (hit.length === 0) ex(2, "お題から発想をうまく飛ばしています。");
+    // --- 調べ（リズムの心地よさ・言葉の運び） ---
+    if (/(けり|けむ|らむ|ぬべし|たる|たり|なり|哉|ぞ|ぬ)$/.test(ends[2]) || /(たる|ける|なる|へば|ねば)/.test(text)) ex("調べ", 2, "文語の言い回しが句に格調を与えています。");
+    if (/(へ|ている|ていた|でいる|でいた|ました|です)$/.test(ends[2])) ex("調べ", -3, "下五が「〜へ」「〜ている」の報告調。名詞で止めるか、切れ字で締めると句になります。");
+    if (all) {
+      const verbs = all.filter((t) => t.pos === "動詞" && t.pos_detail_1 === "自立");
+      if (verbs.length >= 3) { ex("調べ", -3, `動詞が${verbs.length}つ（${uniq(verbs.map((v) => v.basic_form)).join("・")}）。動きが多いと焦点がぼやけます。`); advice.push("動詞は一つか二つに。いちばん大事な動きだけを残しましょう。"); }
+      else if (verbs.length === 0 && kireOk.length) ex("調べ", 1, "動詞を使わず、名詞と切れだけで景色を定めています。");
     }
-
-    // --- くり返し ---
     const kanjiWords = text.match(/[㐀-鿿]{2,}/g) || [];
     const dup = kanjiWords.find((w, i) => kanjiWords.indexOf(w) !== i);
-    if (dup) ex(-3, `「${dup}」が二度出てきます。くり返すなら狙いをはっきり。`);
+    if (dup) ex("調べ", -2, `「${dup}」が二度出てきます。くり返すなら狙いをはっきり。`);
 
-    const hyogen = Math.max(4, Math.min(58, Math.round(hy)));
+    // --- 発想（新鮮さ・お題との距離） ---
+    const cl = CLICHE.filter((w) => text.includes(w));
+    if (cl.length) ex("発想", -4, `「${cl[0]}」はよく見かける言い回し。あなただけの発見を一つ。`);
+    const clo = CLICHE_ONO.filter((w) => text.includes(w));
+    if (clo.length) ex("発想", -3, `「${clo[0]}」は手垢のついたオノマトペ。自分の耳で聞いた音にしてみては。`);
+    else {
+      const ono = text.match(/([ぁ-ゖ]{2})\1|([ァ-ヺ]{2})\2/);
+      if (ono) ex("発想", 2, `オノマトペ「${ono[0]}」が新鮮。音がそのまま景色になっています。`);
+    }
+    if (odai && odai.kw) {
+      const hit = odai.kw.filter((k) => text.includes(k));
+      if (hit.length >= 3) { ex("発想", -5, "お題の場面をそのままなぞっています。写真に写っていない“何か”を一つ。"); advice.push("お題に写っているものは一つまでに。残りの音で、写真の外（音・匂い・記憶）を描きましょう。"); }
+      else if (hit.length === 0) ex("発想", 2, "お題から発想をうまく飛ばしています。");
+      else add(0, "お題の場面を足がかりに詠んでいます。", "info", "発想");
+    }
+
+    Object.values(P).forEach((x) => { x.got = Math.max(0, Math.min(x.max, x.got)); });
+    const hyogen = Object.values(P).reduce((a, x) => a + x.got, 0);
     const score = Math.max(5, Math.min(98, kata + hyogen));
     const verdict = verdictOf(score);
     const parts = [
-      { name: "音数", got: onsu, max: 15 },
-      { name: "季語", got: kigoPt, max: 15 },
-      { name: "切れ", got: kirePt, max: 10 },
+      { name: "音数", got: onsu, max: 15, group: "型", desc: "五・七・五のリズム" },
+      { name: "季語", got: kigoPt, max: 15, group: "型", desc: "季語が一つ、主役になっているか" },
+      { name: "切れ", got: kirePt, max: 10, group: "型", desc: "切れ字や体言止めで句が締まっているか" },
+      { name: "見せる", ...P.見せる, group: "表現", desc: "気持ちや理屈を言わず、景色で見せているか" },
+      { name: "具体", ...P.具体, group: "表現", desc: "手に取れるモノ・固有名詞・数字" },
+      { name: "五感", ...P.五感, group: "表現", desc: "色・音・匂い・手ざわり・味・光" },
+      { name: "季語の生かし方", ...P.季語の生かし方, group: "表現", desc: "季語の説明をせず、別のモノと響き合わせているか" },
+      { name: "調べ", ...P.調べ, group: "表現", desc: "言葉の運び・動詞の数・言い切り" },
+      { name: "発想", ...P.発想, group: "表現", desc: "ありがちでないか・お題から飛べているか" },
     ];
 
     if (!advice.length) {
