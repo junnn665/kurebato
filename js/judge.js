@@ -143,6 +143,7 @@
       if (diff > 0) {
         if (i === 0) { d = diff > 2 ? -4 : -1; add(d, diff > 2 ? `上五が${m}音。上五の字余りは許されやすいけれど、ここまで余ると重い。` : `上五が${m}音の字余り。上五なら許容範囲です。`, null, "音数"); }
         else if (i === 1) { d = diff >= 2 ? -10 : -6; add(d, `中七が${m}音の${m === 8 ? "「中八」" : "字余り"}。リズムがもたつきます。`, null, "音数"); advice.push("中七の助詞（の・が・を・は）を一つ削れないか探してみましょう。"); }
+        else if (diff === 1 && toks[2] && toks[2].filter((t) => t.pos !== "記号").every((t) => t.pos === "名詞")) { d = -1; add(d, `下五が${m}音。名詞一語で切りようがないので、許容範囲の字余りです。`, null, "音数"); }
         else { d = diff >= 2 ? -7 : -4; add(d, `下五が${m}音の字余り。句の着地がもたつきます。`, null, "音数"); advice.push("下五は名詞で5音にきっちり収めると、句が締まります。"); }
       } else {
         d = -diff >= 2 ? -8 : -5;
@@ -154,13 +155,30 @@
     if (onsu === 15) add(0, unsure ? "五・七・五はだいたい守れていそうです（よみは推定）。" : "五・七・五のリズムがきちんと守れています。", "good", "音数");
     if (guessed) add(0, "よみを推定した部分があります（漢字1字＝2音）。音数がちがうときは「よみを直す」で直せます。", "info", "音数");
 
+    // --- 発見・おかしみ（受賞作の選評で重視される「人のおかしみ」「意外な取り合わせ」「スケールの対比」） ---
+    const allToks = toks.every((t) => t) ? toks.flat() : null;
+    const hasTok = (w, pos) => !!allToks && allToks.some((t) => t.surface_form === w && (!pos || t.pos === pos));
+    const OKASHIMI_RE = /(まで.{0,3}(測|量|計|はか|待|押|撮|探|選|見|拭|磨|直)|より先に|る前に|くせに|わりに|たびに|ついつい|こっそり|わざと|明日から|[二三四五六七八九]本目|[二三四五六七八九]度目|[二三四五六七八九]回目|[二三四五六七八九]杯目|いい数字|ふりをし|ふりする|ふりして|ことにする|ことにした)/;
+    const okashimi = OKASHIMI_RE.test(text) || hasTok("のに", "助詞") || (hasTok("ばかり", "助詞") && !/ばかりかな$/.test(text));
+    const BIG_RE = /(億|万年|光年|宇宙|銀河系|地球|太陽系|天地|千年|百年|世界中|地平|水平線)/;
+    const scale = BIG_RE.test(text);
+    const MODERN_RE = /(計$|[^時]計|スマホ|レシート|コンビニ|エレベーター|自販機|充電|改札|体重|血圧|アプリ|ゲーム|ランドセル|リモコン|イヤホン|マスク|冷蔵庫|洗濯機|電子レンジ|宅配|ポイント|履歴|既読|保存|再生|検索|残高|ATM|Wi|LINE)/;
+    const modern = MODERN_RE.test(text);
+    const hakken = okashimi || scale;
+
     // --- 季語（15） ---
     const kigo = window.KIGO.find(text);
     const seasons = uniq(kigo.map((k) => k.season));
     let kigoPt;
     if (kigo.length === 0) {
-      kigoPt = 4;
-      add(-11, "季語が見当たりません。無季の句は上級者の技。まずは季語を一つ入れましょう。", null, "季語");
+      if (hakken) {
+        // 季語がなくても、人のおかしみや大きな発見が主題として立っていれば「無季の句」として認める
+        kigoPt = 10;
+        add(-5, "季語はありませんが、発見そのものが主題として立っています（無季の句・川柳の味わい）。季語を入れると、さらに奥行きが出ます。", null, "季語");
+      } else {
+        kigoPt = 6;
+        add(-9, "季語が見当たりません。無季の句は、季語のかわりに強い発見が要ります。まずは季語を一つ入れてみましょう。", null, "季語");
+      }
       const s = odaiSeason(odai);
       const pool = window.KIGO.SUGGEST[s && s !== "四季" ? s : ["春", "夏", "秋", "冬"][hashStr(text) % 4]];
       advice.push(`たとえば「${pool.slice(hashStr(text) % 4, hashStr(text) % 4 + 3).join("」「")}」のような季語を入れてみては。`);
@@ -201,7 +219,7 @@
       見せる: { got: 9, max: 12 },
       具体: { got: 3, max: 12 },
       五感: { got: 3, max: 10 },
-      季語の生かし方: { got: kigo.length ? 4 : 1, max: 8 },
+      季語の生かし方: { got: kigo.length ? 4 : hakken ? 4 : 2, max: 8 },
       調べ: { got: 4, max: 8 },
       発想: { got: 5, max: 10 },
     };
@@ -270,6 +288,9 @@
     if (dup) ex("調べ", -2, `「${dup}」が二度出てきます。くり返すなら狙いをはっきり。`);
 
     // --- 発想（新鮮さ・お題との距離） ---
+    if (okashimi) ex("発想", 4, "人のしぐさに、思わずくすっとする“おかしみ”があります。説明せずに人間くささを見せる発見です。");
+    if (scale) ex("発想", 3, "大きな時間・空間と、身近なものを並べたスケールの対比。想像がぐっと広がります。");
+    if (modern && !CLICHE.some((w) => text.includes(w))) ex("発想", 2, "今の暮らしのモノを持ちこんで、句に新しさがあります。");
     const cl = CLICHE.filter((w) => text.includes(w));
     if (cl.length) ex("発想", -4, `「${cl[0]}」はよく見かける言い回し。あなただけの発見を一つ。`);
     const clo = CLICHE_ONO.filter((w) => text.includes(w));
