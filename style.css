@@ -20,6 +20,9 @@
   --seigaiha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cg fill='none' stroke='%231f3a63' stroke-width='1.2'%3E%3Cg id='a'%3E%3Ccircle cx='20' cy='20' r='18'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3Ccircle cx='20' cy='20' r='8'/%3E%3Ccircle cx='20' cy='20' r='3'/%3E%3C/g%3E%3Cuse href='%23a' x='-20' y='-10'/%3E%3Cuse href='%23a' x='20' y='-10'/%3E%3C/g%3E%3C/svg%3E");
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* ダブルタップで拡大しない（タップの反応もはやくなる） */
+html, body, button, a, input, label, .chip, .slot, .fuda, .noren { touch-action: manipulation; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { margin: 0; }
 body {
   font-family: var(--gothic);

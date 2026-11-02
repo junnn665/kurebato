@@ -138,7 +138,7 @@
 よみ（音数）は形態素解析 [kuromoji.js](https://github.com/takuyaa/kuromoji.js)（Apache-2.0、`vendor/kuromoji` に同梱）で自動で出します。
 辞書（約18MB）は最初の1回だけ読みこみ、以降はブラウザのキャッシュから。読みこめないときは「漢字1字＝約2音」で推定し、画面の「よみを直す」で直せます。
 
-季語は `js/kigo.js`（ミニ歳時記）、お題は `js/odai.js` に入っています。どちらも足せば増えます。
+季語は `js/kigo.js`（ミニ歳時記）、お題は `js/odai.js`（87題：春11・夏15・梅雨2・秋17・冬14・新年3・いつでも25）に入っています。どちらも足せば増えます。
 
 ## 通信（Firebase）
 
@@ -161,6 +161,9 @@
 ```
 
 別の Firebase プロジェクトを使うときは、`js/net.js` の `FIREBASE_CONFIG` を書きかえてください。
+
+## 操作
+- ダブルタップやピンチで画面が拡大しないようにしてある（`touch-action: manipulation` と viewport の設定）。文字入力欄はすべて16px以上なので、入力のときも勝手に拡大しない
 
 ## 公開のしかた（GitHub Pages）
 
